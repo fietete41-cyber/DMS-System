@@ -1,0 +1,2393 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>ระบบจัดการเอกสาร (DMS)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+ 
+    <style>
+        :root {
+            /* ---- ตัวแปรธีมสี (ปรับได้จากหน้าตั้งค่าระบบ) ---- */
+            --app-bg: #F5F8FC;
+            --app-sidebar-from: #5B7FA6;
+            --app-sidebar-to: #7396B8;
+            --app-sidebar-header: rgba(0,0,0,0.14);
+            --app-card-text: #33394a;
+            --app-btn-text: #ffffff;
+ 
+            /* แม็พเข้ากับตัวแปรสีของ Bootstrap เพื่อให้ปุ่ม/แบดจ์/ไอคอนทั้งระบบเปลี่ยนตามธีม */
+            --bs-primary: #6FA8DC;
+            --bs-primary-rgb: 111,168,220;
+            --bs-secondary: #B4A7D6;
+            --bs-secondary-rgb: 180,167,214;
+            --bs-success: #8FCB9B;
+            --bs-success-rgb: 143,203,155;
+            --bs-info: #8FD3E8;
+            --bs-info-rgb: 143,211,232;
+            --bs-warning: #F5C77E;
+            --bs-warning-rgb: 245,199,126;
+            --bs-danger: #EFA3A3;
+            --bs-danger-rgb: 239,163,163;
+        }
+ 
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: var(--app-bg);
+            overflow-x: hidden;
+            transition: background-color 0.3s;
+        }
+        
+        /* ============================================================
+           Login Screen — โทนหนังสือราชการ: ตราสัญลักษณ์ + เส้นคั่นแบบหัวกระดาษ
+           ============================================================ */
+        #login-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 24px;
+            overflow: hidden;
+            background:
+                radial-gradient(ellipse 900px 600px at 12% 8%, rgba(255,255,255,0.12), transparent 60%),
+                radial-gradient(ellipse 700px 520px at 92% 94%, rgba(0,0,0,0.20), transparent 60%),
+                linear-gradient(160deg, var(--app-sidebar-from) 0%, var(--app-sidebar-to) 100%);
+            transition: background 0.3s;
+        }
+        #login-screen::before {
+            /* ลายเส้นทแยงบางๆ ให้พื้นหลังมีมิติแบบพื้นผิวกระดาษเอกสาร */
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: repeating-linear-gradient(
+                135deg,
+                rgba(255,255,255,0.055) 0px,
+                rgba(255,255,255,0.055) 1px,
+                transparent 1px,
+                transparent 24px
+            );
+            pointer-events: none;
+        }
+        #login-screen::after {
+            content: '';
+            position: absolute;
+            width: 560px;
+            height: 560px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.14), transparent 70%);
+            top: -200px;
+            right: -180px;
+            pointer-events: none;
+        }
+        .login-card {
+            position: relative;
+            z-index: 1;
+            background: #ffffff;
+            padding: 3rem 2.5rem 2.4rem;
+            border-radius: 24px;
+            box-shadow:
+                0 30px 60px -18px rgba(15, 23, 42, 0.35),
+                0 10px 24px -8px rgba(15, 23, 42, 0.14),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+            animation: cardRise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        @keyframes cardRise {
+            0% { opacity: 0; transform: translateY(18px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .login-logo-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .login-logo-wrap::before {
+            content: '';
+            position: absolute;
+            width: 168px;
+            height: 168px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(var(--bs-primary-rgb),0.22) 0%, rgba(var(--bs-primary-rgb),0) 70%);
+            z-index: 0;
+            animation: logoGlowPulse 3.5s ease-in-out infinite;
+        }
+        @keyframes logoGlowPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.08); opacity: 0.7; }
+        }
+        .login-logo-img {
+            position: relative;
+            z-index: 1;
+            max-height: 116px;
+            max-width: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 8px 18px rgba(0,0,0,0.18));
+            animation: logoEntrance 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+                       logoFloat 4.5s ease-in-out 0.7s infinite;
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }
+        .login-logo-img:hover {
+            transform: scale(1.06) rotate(-1deg);
+            filter: drop-shadow(0 12px 22px rgba(0,0,0,0.24));
+        }
+        @keyframes logoEntrance {
+            0% { opacity: 0; transform: scale(0.6) translateY(-14px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+        .login-title {
+            font-family: 'Kanit', 'Sarabun', sans-serif;
+            font-weight: 600;
+            font-size: 2em;
+            letter-spacing: 0.2px;
+            color: #232733;
+            margin-bottom: 6px;
+        }
+        .login-title i {
+            color: var(--bs-primary);
+            margin-right: 6px;
+        }
+        .login-subtitle {
+            font-family: 'Kanit', 'Sarabun', sans-serif;
+            font-weight: 500;
+            font-size: 0.9em;
+            letter-spacing: 3px;
+            color: #ffffff;
+            text-transform: uppercase;
+            background: linear-gradient(120deg, var(--bs-primary), var(--bs-secondary));
+            display: inline-block;
+            padding: 5px 18px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(var(--bs-primary-rgb), 0.3);
+        }
+        .login-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 22px 0 24px;
+        }
+        .login-divider .line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #dde2ea, transparent);
+        }
+        .login-divider .dot {
+            width: 6px;
+            height: 6px;
+            flex-shrink: 0;
+            transform: rotate(45deg);
+            background: var(--bs-primary);
+            opacity: 0.75;
+        }
+        .login-field-label {
+            font-family: 'Sarabun', sans-serif;
+            font-weight: 600;
+            font-size: 0.85em;
+            letter-spacing: 0.4px;
+            color: #6b7684;
+            margin-bottom: 6px;
+        }
+        #loginForm .input-group-text {
+            background: #f4f6f9;
+            border: 1.5px solid #e9ecf2;
+            border-right: none;
+            color: var(--bs-primary);
+        }
+        #loginForm .input-group:focus-within .input-group-text {
+            border-color: var(--bs-primary);
+            background: #ffffff;
+        }
+        #loginForm .form-control {
+            border: 1.5px solid #e9ecf2;
+            border-left: none;
+            padding-top: 0.6rem;
+            padding-bottom: 0.6rem;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 0.98em;
+        }
+        #loginForm .input-group-text:last-child {
+            border-left: none;
+            border-right: 1.5px solid #e9ecf2;
+            background: #f4f6f9;
+        }
+        #loginForm .form-control:focus {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.15);
+        }
+        #loginForm .input-group {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(20,30,50,0.04);
+            transition: box-shadow 0.2s ease, transform 0.15s ease;
+        }
+        #loginForm .input-group:focus-within {
+            box-shadow: 0 6px 16px rgba(var(--bs-primary-rgb), 0.2);
+            transform: translateY(-1px);
+        }
+        .login-submit-btn {
+            font-family: 'Kanit', 'Sarabun', sans-serif;
+            font-weight: 600;
+            font-size: 1.05em;
+            letter-spacing: 1px;
+            padding: 0.72rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--bs-primary), var(--bs-secondary));
+            box-shadow: 0 10px 22px -6px rgba(var(--bs-primary-rgb), 0.5);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .login-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 26px -6px rgba(var(--bs-primary-rgb), 0.55);
+        }
+        .login-submit-btn:active {
+            transform: translateY(0);
+        }
+        .login-footnote {
+            margin-top: 22px;
+            text-align: center;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 0.78em;
+            color: #a3aab5;
+        }
+        .login-footnote i {
+            color: #c3c9d2;
+            margin-right: 4px;
+        }
+        .login-page-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 420px;
+            gap: 18px;
+            position: relative;
+            z-index: 1;
+        }
+        .login-page-footer {
+            text-align: center;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 0.78em;
+            letter-spacing: 0.2px;
+            color: rgba(255,255,255,0.82);
+            padding: 0 10px;
+            line-height: 1.6;
+        }
+        @media (max-width: 420px) {
+            .login-card { padding: 2.4rem 1.6rem 2rem; border-radius: 20px; }
+        }
+ 
+        /* App Layout */
+        #app-screen {
+            display: none;
+            width: 100%;
+        }
+        .wrapper {
+            display: flex;
+            width: 100%;
+            align-items: stretch;
+        }
+ 
+        /* Sidebar */
+        #sidebar {
+            min-width: 250px;
+            max-width: 250px;
+            background: linear-gradient(to top, var(--app-sidebar-from) 0%, var(--app-sidebar-from) 45%, var(--app-sidebar-to) 100%);
+            color: #fff;
+            transition: all 0.3s;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            z-index: 999;
+            box-shadow: 4px 0 18px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+        #sidebar.active {
+            margin-left: -250px;
+        }
+        /* ฉากทึบหลังเมนู แสดงเฉพาะตอนเปิดเมนูบนมือถือ เพื่อให้แตะด้านนอกแล้วปิดเมนูได้ */
+        #sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            z-index: 998;
+        }
+        #sidebar-overlay.show {
+            display: block;
+        }
+        #sidebar .sidebar-header {
+            flex-shrink: 0;
+            padding: 14px 16px;
+            background: var(--app-sidebar-header);
+            text-align: center;
+            border-bottom: 3px solid rgba(255,255,255,0.15);
+        }
+        #sidebar .sidebar-header h4 {
+            font-size: 1.15em;
+            margin-bottom: 6px;
+        }
+        .sidebar-logo-img {
+            max-height: 92px;
+            max-width: 90%;
+            object-fit: contain;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25));
+            animation: logoEntrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }
+        .sidebar-logo-img:hover {
+            transform: scale(1.08);
+            filter: drop-shadow(0 6px 14px rgba(0,0,0,0.32));
+        }
+        #sidebar ul.components {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            padding: 8px 0;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.35) transparent;
+        }
+        #sidebar ul.components::-webkit-scrollbar {
+            width: 6px;
+        }
+        #sidebar ul.components::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+        }
+        #sidebar ul li a {
+            padding: 10px 20px;
+            font-size: 1em;
+            display: block;
+            color: rgba(255,255,255,0.92);
+            text-decoration: none;
+            transition: 0.2s;
+        }
+        #sidebar ul li a:hover, #sidebar ul li.active > a {
+            background: rgba(255,255,255,0.18);
+            color: #fff;
+            border-left: 4px solid var(--bs-warning);
+        }
+        #sidebar ul li a i {
+            margin-right: 10px;
+            width: 18px;
+            text-align: center;
+        }
+ 
+        /* Main Content */
+        #content {
+            width: 100%;
+            min-height: 100vh;
+            transition: all 0.3s;
+            margin-left: 250px;
+        }
+        #content.active {
+            margin-left: 0;
+        }
+        .top-navbar {
+            background: white;
+            padding: 15px 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 998;
+            border-bottom: 3px solid transparent;
+            border-image: linear-gradient(90deg, var(--bs-primary), var(--bs-secondary)) 1;
+        }
+        .main-container {
+            padding: 25px;
+        }
+ 
+        /* Cards & Utilities */
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .stat-card .icon {
+            font-size: 2.5rem;
+            color: rgba(0,0,0,0.12);
+        }
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        .view-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+ 
+        /* Responsive */
+        @media (max-width: 768px) {
+            #sidebar {
+                margin-left: -250px;
+                width: 80%;
+                min-width: 240px;
+                max-width: 300px;
+            }
+            #sidebar.active {
+                margin-left: 0;
+            }
+            #content {
+                margin-left: 0;
+            }
+ 
+            .top-navbar {
+                padding: 10px 12px;
+                gap: 8px;
+            }
+            .top-navbar .btn {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.85em;
+            }
+            .top-navbar .btn span.btn-label {
+                display: none;
+            }
+ 
+            .main-container {
+                padding: 14px;
+            }
+ 
+            h3 {
+                font-size: 1.25em;
+            }
+ 
+            .stat-card {
+                padding: 14px;
+            }
+            .stat-card .h3 {
+                font-size: 1.4rem;
+            }
+            .stat-card .icon {
+                font-size: 1.8rem;
+            }
+ 
+            .card-body {
+                padding: 14px;
+            }
+ 
+            .table-responsive {
+                font-size: 0.85em;
+            }
+            .table-responsive .btn-sm {
+                padding: 0.28rem 0.5rem;
+            }
+ 
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+ 
+            .d-flex.gap-2.flex-wrap .btn {
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+ 
+            /* ปุ่มที่ใช้แตะบนมือถือควรมีขนาดขั้นต่ำตามหลัก accessibility */
+            .btn, #sidebarCollapse, .theme-swatch {
+                min-height: 38px;
+            }
+ 
+            #sidebar ul li a {
+                padding: 13px 20px;
+                font-size: 1.02em;
+            }
+        }
+ 
+        @media (max-width: 480px) {
+            .login-title {
+                font-size: 1.6em;
+            }
+            .row-cols-2 > .col {
+                flex: 0 0 50%;
+                max-width: 50%;
+            }
+            .top-navbar #last-refresh-label {
+                display: none !important;
+            }
+            .modal-footer {
+                flex-wrap: wrap;
+            }
+            .modal-footer .btn {
+                flex: 1 1 auto;
+            }
+            .logo-preview-box .d-flex.gap-2 {
+                flex-wrap: wrap;
+            }
+        }
+ 
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+ 
+        /* สีสดทั้งระบบ: ตัวหนังสือบนแบดจ์/ปุ่มใช้สีขาวเพื่อความคมชัดบนพื้นสีสด */
+        .badge {
+            color: var(--app-btn-text) !important;
+            font-weight: 600;
+        }
+        .btn-primary, .btn-secondary, .btn-success, .btn-info, .btn-warning, .btn-danger {
+            color: var(--app-btn-text);
+            border: none;
+        }
+        .btn-primary:hover, .btn-secondary:hover, .btn-success:hover, .btn-info:hover, .btn-warning:hover, .btn-danger:hover,
+        .btn-primary:focus, .btn-secondary:focus, .btn-success:focus, .btn-info:focus, .btn-warning:focus, .btn-danger:focus {
+            color: var(--app-btn-text);
+            filter: brightness(0.95);
+        }
+ 
+        /* ตัวเลือกธีมสีในหน้าตั้งค่า */
+        .theme-swatch {
+            cursor: pointer;
+            border: 3px solid transparent;
+            border-radius: 14px;
+            padding: 10px;
+            text-align: center;
+            transition: 0.15s;
+            background: #fff;
+        }
+        .theme-swatch:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+        .theme-swatch.active {
+            border-color: #6c757d;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+        }
+        .theme-swatch .swatch-preview {
+            height: 42px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .theme-swatch .swatch-name {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: var(--app-card-text);
+        }
+        
+        /* คลาสสำหรับซ่อนเมนู Admin */
+        .admin-only {
+            display: none; /* ซ่อนเป็นค่าเริ่มต้น จะแสดงเมื่อเป็น Admin */
+        }
+ 
+        .logo-preview-box {
+            width: 100%;
+            max-width: 280px;
+            min-height: 130px;
+            border: 1px dashed #c9d2dc;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            background: #fbfcfe;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .logo-preview-box img {
+            max-width: 100%;
+            max-height: 150px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.12));
+        }
+    </style>
+</head>
+<body>
+ 
+    <div id="login-screen">
+        <div class="login-page-wrap">
+        <div class="login-card text-center">
+            <div class="login-logo-wrap">
+                <img id="login-logo" class="login-logo-img" src="" alt="โลโก้" style="display:none;">
+            </div>
+            <h2 class="mb-2 login-title"><i class="fas fa-folder-open"></i> ระบบจัดเก็บเอกสาร</h2>
+            <span class="login-subtitle">DMS System</span>
+            <div class="login-divider"><span class="line"></span><span class="dot"></span><span class="line"></span></div>
+            <div id="loginForm">
+                <div class="mb-3 text-start">
+                    <label class="form-label login-field-label">ชื่อผู้ใช้</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <input type="text" class="form-control" id="username" value="admin" required>
+                    </div>
+                </div>
+                <div class="mb-4 text-start">
+                    <label class="form-label login-field-label">รหัสผ่าน</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <input type="password" class="form-control" id="password" value="1234" required>
+                        <span class="input-group-text" style="cursor:pointer;" onclick="togglePasswordVisibility('password', this)">
+                            <i class="fas fa-eye"></i>
+                        </span>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary w-100 login-submit-btn" onclick="handleLogin(event)"><i class="fas fa-right-to-bracket me-1"></i> เข้าสู่ระบบ</button>
+            </div>
+            <div class="login-footnote"><i class="fas fa-shield-halved"></i>เข้าสู่ระบบอย่างปลอดภัย</div>
+        </div>
+        <div class="login-page-footer">© 2026 DMS System — ระบบจัดการเอกสาร | พัฒนาโดย รังสรรค์ ลอยแก้ว | วิทยาลัยการอาชีพนครปฐม</div>
+        </div>
+    </div>
+ 
+    <div id="app-screen">
+        <div class="wrapper">
+            <!-- ฉากทึบสำหรับปิดเมนูบนมือถือเมื่อแตะด้านนอก -->
+            <div id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+ 
+            <!-- Sidebar -->
+            <nav id="sidebar">
+                <div class="sidebar-header">
+                    <img id="sidebar-logo" class="sidebar-logo-img" src="" alt="โลโก้" style="display:none;">
+                    <h4><i class="fas fa-folder-open"></i> DMS System</h4>
+                    <div id="org-name-display" class="small text-white-50 mb-1" style="display:none;"></div>
+                    <small id="user-display-name">ผู้ใช้งาน</small>
+                    <br><small id="user-display-role" class="badge bg-secondary mt-1">Role</small>
+                </div>
+ 
+                <ul class="list-unstyled components">
+                    <li class="active" onclick="switchMenu('dashboard', this)">
+                        <a href="#"><i class="fas fa-chart-line"></i> Dashboard</a>
+                    </li>
+                    <li onclick="switchMenu('doc-in', this)">
+                        <a href="#"><i class="fas fa-inbox"></i> หนังสือรับ</a>
+                    </li>
+                    <li onclick="switchMenu('doc-out', this)">
+                        <a href="#"><i class="fas fa-paper-plane"></i> หนังสือส่ง</a>
+                    </li>
+                    <li onclick="switchMenu('doc-circular', this)">
+                        <a href="#"><i class="fas fa-sync-alt"></i> หนังสือเวียน</a>
+                    </li>
+                    <li onclick="switchMenu('doc-internal', this)">
+                        <a href="#"><i class="fas fa-building"></i> หนังสือภายใน</a>
+                    </li>
+                    <li onclick="switchMenu('doc-urgent', this)">
+                        <a href="#"><i class="fas fa-bolt"></i> หนังสือด่วน</a>
+                    </li>
+                    <li onclick="switchMenu('doc-general', this)">
+                        <a href="#"><i class="fas fa-file-alt"></i> เอกสารทั่วไป</a>
+                    </li>
+                    <li onclick="switchMenu('search', this)">
+                        <a href="#"><i class="fas fa-search"></i> ค้นหาเอกสาร</a>
+                    </li>
+                    <!-- เมนูเฉพาะ Admin -->
+                    <li class="admin-only" onclick="switchMenu('users', this)">
+                        <a href="#"><i class="fas fa-users"></i> ผู้ใช้งาน</a>
+                    </li>
+                    <li class="admin-only" onclick="switchMenu('settings', this)">
+                        <a href="#"><i class="fas fa-cog"></i> ตั้งค่าระบบ</a>
+                    </li>
+                </ul>
+            </nav>
+ 
+            <!-- Page Content -->
+            <div id="content">
+                <!-- Topbar -->
+                <div class="top-navbar">
+                    <button type="button" id="sidebarCollapse" class="btn btn-outline-secondary">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="d-flex align-items-center gap-2">
+                        <small id="last-refresh-label" class="text-muted d-none d-md-inline"></small>
+                        <button class="btn btn-outline-primary btn-sm" onclick="refreshData(true)" title="รีเฟรชข้อมูลตอนนี้">
+                            <i class="fas fa-rotate"></i> <span class="btn-label">รีเฟรช</span>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="handleLogout()" title="ออกจากระบบ">
+                            <i class="fas fa-sign-out-alt"></i> <span class="btn-label">ออกจากระบบ</span>
+                        </button>
+                    </div>
+                </div>
+ 
+                <!-- Main Container -->
+                <div class="main-container">
+                    
+                    <div id="view-dashboard" class="view-section active">
+                        <h3 class="mb-4">ภาพรวมระบบ (Dashboard)</h3>
+ 
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-body">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-6 col-md-3">
+                                        <label class="form-label mb-1 small text-muted fw-bold">เดือน</label>
+                                        <select id="dashMonth" class="form-select" onchange="updateDashboard()">
+                                            <option value="all">ทุกเดือน</option>
+                                            <option value="1">มกราคม</option>
+                                            <option value="2">กุมภาพันธ์</option>
+                                            <option value="3">มีนาคม</option>
+                                            <option value="4">เมษายน</option>
+                                            <option value="5">พฤษภาคม</option>
+                                            <option value="6">มิถุนายน</option>
+                                            <option value="7">กรกฎาคม</option>
+                                            <option value="8">สิงหาคม</option>
+                                            <option value="9">กันยายน</option>
+                                            <option value="10">ตุลาคม</option>
+                                            <option value="11">พฤศจิกายน</option>
+                                            <option value="12">ธันวาคม</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <label class="form-label mb-1 small text-muted fw-bold">ปี</label>
+                                        <select id="dashYear" class="form-select" onchange="updateDashboard()">
+                                            <option value="all">ทุกปี</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <label class="form-label mb-1 small text-muted fw-bold">ฝ่าย</label>
+                                        <select id="dashDept" class="form-select" onchange="onDashDeptChange()">
+                                            <option value="all">ทุกฝ่าย</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <label class="form-label mb-1 small text-muted fw-bold">งาน</label>
+                                        <select id="dashSubDept" class="form-select" onchange="updateDashboard()">
+                                            <option value="all">ทุกงาน</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 text-md-end">
+                                        <button class="btn btn-outline-secondary" onclick="resetDashboardFilter()">
+                                            <i class="fas fa-rotate-left"></i> ล้างตัวกรอง
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+ 
+                        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 g-lg-4">
+                            <div class="col mb-4">
+                                <div class="stat-card border-left-primary h-100">
+                                    <div>
+                                        <div class="text-muted small text-uppercase fw-bold">หนังสือรับ</div>
+                                        <div class="h3 mb-0" id="stat-in">0</div>
+                                    </div>
+                                    <div class="icon"><i class="fas fa-inbox text-primary"></i></div>
+                                </div>
+                            </div>
+                            <div class="col mb-4">
+                                <div class="stat-card border-left-success h-100">
+                                    <div>
+                                        <div class="text-muted small text-uppercase fw-bold">หนังสือส่ง</div>
+                                        <div class="h3 mb-0" id="stat-out">0</div>
+                                    </div>
+                                    <div class="icon"><i class="fas fa-paper-plane text-success"></i></div>
+                                </div>
+                            </div>
+                            <div class="col mb-4">
+                                <div class="stat-card border-left-info h-100">
+                                    <div>
+                                        <div class="text-muted small text-uppercase fw-bold">หนังสือเวียน</div>
+                                        <div class="h3 mb-0" id="stat-cir">0</div>
+                                    </div>
+                                    <div class="icon"><i class="fas fa-sync-alt text-info"></i></div>
+                                </div>
+                            </div>
+                            <div class="col mb-4">
+                                <div class="stat-card border-left-secondary h-100">
+                                    <div>
+                                        <div class="text-muted small text-uppercase fw-bold">หนังสือภายใน</div>
+                                        <div class="h3 mb-0" id="stat-internal">0</div>
+                                    </div>
+                                    <div class="icon"><i class="fas fa-building text-secondary"></i></div>
+                                </div>
+                            </div>
+                            <div class="col mb-4">
+                                <div class="stat-card border-left-danger h-100">
+                                    <div>
+                                        <div class="text-muted small text-uppercase fw-bold">หนังสือด่วน</div>
+                                        <div class="h3 mb-0" id="stat-urgent">0</div>
+                                    </div>
+                                    <div class="icon"><i class="fas fa-bolt text-danger"></i></div>
+                                </div>
+                            </div>
+                            <div class="col mb-4">
+                                <div class="stat-card border-left-warning h-100">
+                                    <div>
+                                        <div class="text-muted small text-uppercase fw-bold">เอกสารทั่วไป</div>
+                                        <div class="h3 mb-0" id="stat-gen">0</div>
+                                    </div>
+                                    <div class="icon"><i class="fas fa-file-alt text-warning"></i></div>
+                                </div>
+                            </div>
+                            <div class="col mb-4">
+                                <div class="stat-card border-left-dark h-100">
+                                    <div>
+                                        <div class="text-muted small text-uppercase fw-bold">เอกสารทั้งหมด</div>
+                                        <div class="h3 mb-0" id="stat-total">0</div>
+                                    </div>
+                                    <div class="icon"><i class="fas fa-folder text-dark"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-white" id="barChartTitle">สถิติเอกสารรายเดือน</div>
+                                    <div class="card-body">
+                                        <canvas id="barChart" height="100"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-white" id="pieChartTitle">สัดส่วนประเภทเอกสาร</div>
+                                    <div class="card-body">
+                                        <canvas id="pieChart" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+ 
+                    <div id="view-doc-list" class="view-section">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h3 id="doc-page-title" class="fw-bold">รายการเอกสาร</h3>
+                            <!-- ปุ่มเพิ่มเอกสาร เฉพาะ Admin -->
+                            <div class="admin-only">
+                                <button class="btn btn-primary" onclick="openDocModal()">
+                                    <i class="fas fa-plus"></i> เพิ่มเอกสารใหม่
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>เลขที่เอกสาร</th>
+                                                <th>เรื่อง</th>
+                                                <th>วันที่</th>
+                                                <th>จาก/ถึง</th>
+                                                <th>ฝ่าย/งาน</th>
+                                                <th>สถานะ</th>
+                                                <th>จัดการ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="doc-table-body">
+                                            <!-- ข้อมูลจะถูกสร้างด้วย JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+ 
+                    <div id="view-search" class="view-section">
+                        <h3 class="mb-4">ค้นหาเอกสาร</h3>
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label">คำค้นหา (เรื่อง/เลขที่)</label>
+                                        <input type="text" id="searchInput" class="form-control" placeholder="พิมพ์คำค้นหา...">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">ประเภทเอกสาร</label>
+                                        <select id="searchType" class="form-select">
+                                            <option value="all">ทั้งหมด</option>
+                                            <option value="doc-in">หนังสือรับ</option>
+                                            <option value="doc-out">หนังสือส่ง</option>
+                                            <option value="doc-circular">หนังสือเวียน</option>
+                                            <option value="doc-internal">หนังสือภายใน</option>
+                                            <option value="doc-urgent">หนังสือด่วน</option>
+                                            <option value="doc-general">เอกสารทั่วไป</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">ฝ่าย</label>
+                                        <select id="searchDept" class="form-select" onchange="onSearchDeptChange()">
+                                            <option value="all">ทุกฝ่าย</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">งาน</label>
+                                        <select id="searchSubDept" class="form-select">
+                                            <option value="all">ทุกงาน</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-end">
+                                        <button class="btn btn-primary w-100" onclick="performSearch()">ค้นหา</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="search-results"></div>
+                    </div>
+                    
+                    <!-- Users View -->
+                    <div id="view-users" class="view-section">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                            <h3 class="fw-bold mb-0">การจัดการผู้ใช้งาน</h3>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-outline-secondary" onclick="downloadUserTemplate()">
+                                    <i class="fas fa-file-excel"></i> ดาวน์โหลดฟอร์ม Excel
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="triggerImportUser()">
+                                    <i class="fas fa-file-import"></i> นำเข้าจาก Excel
+                                </button>
+                                <input type="file" id="importUserFile" accept=".xlsx,.xls" style="display:none" onchange="handleImportFile(event)">
+                                <button class="btn btn-success" onclick="openUserModal()">
+                                    <i class="fas fa-user-plus"></i> เพิ่มผู้ใช้ใหม่
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>ชื่อ-นามสกุล</th>
+                                                <th>ชื่อผู้ใช้ (Username)</th>
+                                                <th>สิทธิ์ (Role)</th>
+                                                <th>สถานะ</th>
+                                                <th>จัดการ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="user-table-body">
+                                            <!-- ข้อมูล User -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+ 
+                    <!-- Settings View -->
+                    <div id="view-settings" class="view-section">
+                        <h3 class="fw-bold mb-4">ตั้งค่าระบบ</h3>
+                        <div class="row g-4">
+                            <div class="col-lg-6 d-flex flex-column gap-4">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-white fw-bold"><i class="fas fa-building text-primary me-1"></i> ข้อมูลหน่วยงาน / องค์กร</div>
+                                    <div class="card-body">
+                                        <div id="orgSettingsForm">
+                                            <div class="mb-3">
+                                                <label class="form-label">ชื่อหน่วยงาน</label>
+                                                <input type="text" class="form-control" id="settingOrgName" value="บริษัท ตัวอย่าง จำกัด">
+                                            </div>
+                                            <button type="button" class="btn btn-primary" onclick="saveSettings(event)">
+                                                <i class="fas fa-save"></i> บันทึกการตั้งค่า
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+ 
+                                <div class="card shadow-sm flex-grow-1">
+                                    <div class="card-header bg-white fw-bold"><i class="fas fa-palette text-primary me-1"></i> ธีมสีของระบบ</div>
+                                    <div class="card-body d-flex flex-column">
+                                        <p class="text-muted small mb-3">เลือกโทนสีที่สบายตา ระบบจะเปลี่ยนสีทันทีเมื่อกดเลือก และจะถูกบันทึกเมื่อกด "บันทึกการตั้งค่า"</p>
+                                        <div class="row row-cols-3 row-cols-md-5 g-2" id="themeSwatchGrid">
+                                            <!-- สร้างด้วย JS จาก THEMES -->
+                                        </div>
+                                        <div class="mt-3">
+                                            <button type="button" class="btn btn-primary" onclick="saveSettings(event)">
+                                                <i class="fas fa-save"></i> บันทึกการตั้งค่า
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+ 
+                            <div class="col-lg-6">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header bg-white fw-bold"><i class="fas fa-image text-primary me-1"></i> โลโก้ระบบ</div>
+                                    <div class="card-body d-flex flex-column">
+                                        <p class="text-muted small mb-3">ใส่ลิงก์รูปภาพโลโก้ (URL) ที่ต้องการให้แสดงในหน้าล็อกอินและแถบเมนูด้านซ้าย</p>
+                                        <div class="d-flex justify-content-center mb-3">
+                                            <div class="logo-preview-box">
+                                                <img id="settingLogoPreview" src="" alt="ตัวอย่างโลโก้">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">ลิงก์รูปภาพโลโก้ (URL)</label>
+                                            <input type="text" class="form-control" id="settingLogoUrl" placeholder="https://..." oninput="previewLogoUrl()">
+                                        </div>
+                                        <div class="d-flex gap-2 mt-auto">
+                                            <button type="button" class="btn btn-primary" onclick="saveSettings(event)">
+                                                <i class="fas fa-save"></i> บันทึกการตั้งค่า
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="resetLogoToDefault()">
+                                                <i class="fas fa-rotate-left"></i> ใช้โลโก้เริ่มต้น
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+ 
+                </div>
+            </div>
+        </div>
+    </div>
+ 
+    <!-- Document Modal (Add/Edit) -->
+    <div class="modal fade" id="docModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-fullscreen-sm-down">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title" id="docModalLabel">เพิ่มเอกสาร</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="docForm">
+                        <input type="hidden" id="docId">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">เลขที่เอกสาร</label>
+                                <input type="text" class="form-control" id="docNo" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">ลงวันที่</label>
+                                <input type="date" class="form-control" id="docDate" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">เรื่อง</label>
+                            <input type="text" class="form-control" id="docTitle" required>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">จาก/ถึง (หน่วยงาน)</label>
+                                <input type="text" class="form-control" id="docFrom">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">ฝ่าย <span class="text-danger">*</span></label>
+                                <select class="form-select" id="docDepartment" required onchange="onDocDepartmentChange()">
+                                    <option value="">-- เลือกฝ่าย --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">งาน <span class="text-danger">*</span></label>
+                                <select class="form-select" id="docSubDepartment" required>
+                                    <option value="">-- เลือกฝ่ายก่อน --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">อัปโหลดไฟล์ (PDF, Word, Excel)</label>
+                            <input class="form-control" type="file" id="docFile">
+                            <small class="text-muted">ในระบบจริงจะถูกอัปโหลดไปยัง Google Drive</small>
+                        </div>
+                        <div class="modal-footer px-0 pb-0">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                            <button type="button" class="btn btn-primary" onclick="saveDocument(event)"><i class="fas fa-save"></i> บันทึกข้อมูล</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+ 
+    <!-- User Modal (Add/Edit) -->
+    <div class="modal fade" id="userModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-fullscreen-sm-down">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title" id="userModalLabel">จัดการผู้ใช้</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="userForm">
+                        <input type="hidden" id="userId">
+                        <div class="mb-3">
+                            <label class="form-label">ชื่อ-นามสกุล</label>
+                            <input type="text" class="form-control" id="userName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">ชื่อผู้ใช้ (Username)</label>
+                            <input type="text" class="form-control" id="userUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">รหัสผ่าน (Password)</label>
+                            <input type="text" class="form-control" id="userPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">สิทธิ์การใช้งาน (Role)</label>
+                            <select class="form-select" id="userRole">
+                                <option value="user">User (ดูเอกสารได้อย่างเดียว)</option>
+                                <option value="admin">Admin (จัดการระบบได้)</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer px-0 pb-0">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                            <button type="button" class="btn btn-success" onclick="saveUser(event)"><i class="fas fa-save"></i> บันทึกข้อมูล</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+ 
+    <!-- Import Users Preview Modal -->
+    <div class="modal fade" id="importPreviewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-fullscreen-sm-down">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title"><i class="fas fa-file-import"></i> ตรวจสอบข้อมูลก่อนนำเข้า</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">พบผู้ใช้งานที่พร้อมนำเข้า <strong id="importPreviewCount">0</strong> รายการ</p>
+                    <div id="importPreviewErrors" class="mb-3" style="display:none;"></div>
+                    <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                        <table class="table table-sm table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ชื่อ-นามสกุล</th>
+                                    <th>ชื่อผู้ใช้ (Username)</th>
+                                    <th>สิทธิ์ (Role)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="importPreviewBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmImportUsers()">
+                        <i class="fas fa-check"></i> ยืนยันนำเข้า
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+ 
+ 
+    <!-- ต้องมีบรรทัดนี้เพื่อให้ Modal ทำงานได้ -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let appUsers = [];
+        let appDocuments = [];
+        let appDepartments = {};
+        let currentUser = null;
+        let currentDocType = 'doc-in'; 
+        let barChartInstance, pieChartInstance;
+        let docModal, userModal, importPreviewModal;
+        let pendingImportUsers = [];
+        let currentThemeKey = 'graysunset';
+        const DEFAULT_LOGO_URL = 'https://i.postimg.cc/FR3ZBhVM/sanea-khxng-s-n-ange-n-s-khaw-th-nsm-y-mode-r-n-thangkar-th-rk-c-cdhmay-xeksar-A4-(11).png';
+        let appSettings = { orgName: '', theme: 'graysunset', logoUrl: DEFAULT_LOGO_URL };
+        let autoRefreshTimer = null;
+        const AUTO_REFRESH_MS = 5 * 60 * 1000; // รีเฟรชข้อมูลอัตโนมัติทุก 5 นาที
+ 
+        // โครงสร้างฝ่าย/งานสำรอง (กรณีเซิร์ฟเวอร์ยังไม่ส่งค่ามา) - ใช้ตอนหน้าเว็บเพิ่งโหลด
+        const DEFAULT_DEPARTMENTS = {
+            'ฝ่ายบริหารทรัพยากร': [
+                'งานบริหารทั่วไป',
+                'งานบริหารและพัฒนาทรัพยากรบุคลากร',
+                'งานการเงิน',
+                'งานบัญชี',
+                'งานพัสดุ',
+                'งานอาคารสถานที่',
+                'งานทะเบียน',
+                'งานตรวจสอบภายใน'
+            ],
+            'ฝ่ายยุทธศาสตร์และแผนงาน': [
+                'งานพัฒนายุทธศาสตร์แผนงานและงบประมาณ',
+                'งานประกันคุณภาพการศึกษาฯ',
+                'งานศูนย์ดิจิทัลฯ',
+                'งานส่งเสริมการวิจัยฯ',
+                'งานส่งเสริมธุรกิจฯ',
+                'งานติดตามและประเมินผลการอาชีวศึกษา'
+            ],
+            'ฝ่ายกิจการนักเรียน นักศึกษา': [
+                'งานกิจการนักเรียน นักศึกษา',
+                'งานปกครองฯ',
+                'งานโครงการพิเศษฯ',
+                'งานครูที่ปรึกษาและการแนะแนว',
+                'งานสวัสดิการฯ'
+            ],
+            'ฝ่ายวิชาการ': [
+                'งานหลักสูตร',
+                'งานวัดและประเมินผล',
+                'งานอาชีวศึกษาระบบทวิภาคี',
+                'งานวิทยบริการฯ',
+                'งานการศึกษาพิเศษ',
+                'งานเทคโนโลยีฯ'
+            ]
+        };
+ 
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+            if (e.isComposing) return;
+            const tag = (e.target.tagName || '').toLowerCase();
+            if (tag !== 'input') return;
+ 
+            e.preventDefault();
+            e.stopPropagation();
+ 
+            if (e.target.closest('#loginForm')) return handleLogin(e);
+            if (e.target.closest('#docForm')) return saveDocument(e);
+            if (e.target.closest('#userForm')) return saveUser(e);
+            if (e.target.id === 'settingOrgName') return saveSettings(e);
+            if (e.target.id === 'settingLogoUrl') return saveSettings(e);
+        }, true);
+ 
+        function togglePasswordVisibility(inputId, iconWrapperEl) {
+            const input = document.getElementById(inputId);
+            const icon = iconWrapperEl.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+ 
+        function previewLogoUrl() {
+            const url = document.getElementById('settingLogoUrl').value.trim() || DEFAULT_LOGO_URL;
+            document.getElementById('settingLogoPreview').src = url;
+        }
+ 
+        function resetLogoToDefault() {
+            document.getElementById('settingLogoUrl').value = DEFAULT_LOGO_URL;
+            previewLogoUrl();
+        }
+ 
+        function applyLogo(url) {
+            const finalUrl = url || DEFAULT_LOGO_URL;
+            const loginLogo = document.getElementById('login-logo');
+            const sidebarLogo = document.getElementById('sidebar-logo');
+            if (loginLogo) {
+                loginLogo.src = finalUrl;
+                loginLogo.style.display = finalUrl ? 'inline-block' : 'none';
+            }
+            if (sidebarLogo) {
+                sidebarLogo.src = finalUrl;
+                sidebarLogo.style.display = finalUrl ? 'inline-block' : 'none';
+            }
+        }
+ 
+        function gsRun(functionName, args, onSuccess, options) {
+            options = options || {};
+            const timeoutMs = options.timeoutMs || 20000;
+            let done = false;
+ 
+            const timer = setTimeout(function () {
+                if (done) return;
+                done = true;
+                Swal.fire('หมดเวลาเชื่อมต่อ', 'เซิร์ฟเวอร์ไม่ตอบสนองภายในเวลาที่กำหนด กรุณาตรวจสอบการเชื่อมต่อ หรือฟังก์ชัน "' + functionName + '" ฝั่ง Apps Script', 'error');
+            }, timeoutMs);
+ 
+            if (typeof google === 'undefined' || !google.script || !google.script.run) {
+                clearTimeout(timer);
+                Swal.fire('ไม่พบ google.script.run', 'หน้านี้ต้องรันภายใน Google Apps Script Web App เท่านั้น (เปิดผ่านลิงก์ /exec) จึงจะเชื่อมต่อฐานข้อมูลได้', 'error');
+                return;
+            }
+ 
+            google.script.run
+                .withSuccessHandler(function (result) {
+                    if (done) return;
+                    done = true;
+                    clearTimeout(timer);
+                    onSuccess(result);
+                })
+                .withFailureHandler(function (error) {
+                    if (done) return;
+                    done = true;
+                    clearTimeout(timer);
+                    Swal.fire('เกิดข้อผิดพลาด', (error && error.message) ? error.message : String(error), 'error');
+                })
+                [functionName].apply(null, args || []);
+        }
+ 
+        const THEMES = {
+            graysunset: {
+                name: 'เทา-ส้ม',
+                vars: {
+                    '--app-bg': '#F7F8FA',
+                    '--app-sidebar-from': '#9AA5B1',
+                    '--app-sidebar-to': '#FF8C3D',
+                    '--app-btn-text': '#ffffff',
+                    '--bs-primary': '#FF8C3D', '--bs-primary-rgb': '255,140,61',
+                    '--bs-secondary': '#94A3B3', '--bs-secondary-rgb': '148,163,179',
+                    '--bs-success': '#22C55E', '--bs-success-rgb': '34,197,94',
+                    '--bs-info': '#8FD3E8', '--bs-info-rgb': '143,211,232',
+                    '--bs-warning': '#FBBF24', '--bs-warning-rgb': '251,191,36',
+                    '--bs-danger': '#EF4444', '--bs-danger-rgb': '239,68,68'
+                }
+            },
+            sky: {
+                name: 'ฟ้า-เทอร์ควอยซ์',
+                vars: {
+                    '--app-bg': '#EFF6FB',
+                    '--app-sidebar-from': '#0B5ED7',
+                    '--app-sidebar-to': '#12C9B0',
+                    '--app-btn-text': '#ffffff',
+                    '--bs-primary': '#2F8FEA', '--bs-primary-rgb': '47,143,234',
+                    '--bs-secondary': '#12C9B0', '--bs-secondary-rgb': '18,201,176',
+                    '--bs-success': '#22C55E', '--bs-success-rgb': '34,197,94',
+                    '--bs-info': '#06B6D4', '--bs-info-rgb': '6,182,212',
+                    '--bs-warning': '#F5A524', '--bs-warning-rgb': '245,165,36',
+                    '--bs-danger': '#EF4444', '--bs-danger-rgb': '239,68,68'
+                }
+            },
+            mint: {
+                name: 'มรกต-ฟ้าเทอร์ควอยซ์',
+                vars: {
+                    '--app-bg': '#ECFAF5',
+                    '--app-sidebar-from': '#0F9D58',
+                    '--app-sidebar-to': '#00C2CB',
+                    '--app-btn-text': '#ffffff',
+                    '--bs-primary': '#10B981', '--bs-primary-rgb': '16,185,129',
+                    '--bs-secondary': '#06B6D4', '--bs-secondary-rgb': '6,182,212',
+                    '--bs-success': '#22C55E', '--bs-success-rgb': '34,197,94',
+                    '--bs-info': '#14B8A6', '--bs-info-rgb': '20,184,166',
+                    '--bs-warning': '#F5A524', '--bs-warning-rgb': '245,165,36',
+                    '--bs-danger': '#EF4444', '--bs-danger-rgb': '239,68,68'
+                }
+            },
+            lavender: {
+                name: 'ม่วง-ชมพูสด',
+                vars: {
+                    '--app-bg': '#F6F2FE',
+                    '--app-sidebar-from': '#6C3CE9',
+                    '--app-sidebar-to': '#FF5DA2',
+                    '--app-btn-text': '#ffffff',
+                    '--bs-primary': '#8B5CF6', '--bs-primary-rgb': '139,92,246',
+                    '--bs-secondary': '#EC4899', '--bs-secondary-rgb': '236,72,153',
+                    '--bs-success': '#22C55E', '--bs-success-rgb': '34,197,94',
+                    '--bs-info': '#6366F1', '--bs-info-rgb': '99,102,241',
+                    '--bs-warning': '#F5A524', '--bs-warning-rgb': '245,165,36',
+                    '--bs-danger': '#EF4444', '--bs-danger-rgb': '239,68,68'
+                }
+            },
+            peach: {
+                name: 'ส้ม-โค้อรัลสด',
+                vars: {
+                    '--app-bg': '#FFF3EC',
+                    '--app-sidebar-from': '#FF7A00',
+                    '--app-sidebar-to': '#FF3D68',
+                    '--app-btn-text': '#ffffff',
+                    '--bs-primary': '#FB923C', '--bs-primary-rgb': '251,146,60',
+                    '--bs-secondary': '#F43F5E', '--bs-secondary-rgb': '244,63,94',
+                    '--bs-success': '#22C55E', '--bs-success-rgb': '34,197,94',
+                    '--bs-info': '#38BDF8', '--bs-info-rgb': '56,189,248',
+                    '--bs-warning': '#FBBF24', '--bs-warning-rgb': '251,191,36',
+                    '--bs-danger': '#E11D48', '--bs-danger-rgb': '225,29,72'
+                }
+            },
+            rose: {
+                name: 'โรส-ไวโอเลตสด',
+                vars: {
+                    '--app-bg': '#FDF1F6',
+                    '--app-sidebar-from': '#FF2E63',
+                    '--app-sidebar-to': '#7B2FF7',
+                    '--app-btn-text': '#ffffff',
+                    '--bs-primary': '#F43F5E', '--bs-primary-rgb': '244,63,94',
+                    '--bs-secondary': '#A855F7', '--bs-secondary-rgb': '168,85,247',
+                    '--bs-success': '#22C55E', '--bs-success-rgb': '34,197,94',
+                    '--bs-info': '#38BDF8', '--bs-info-rgb': '56,189,248',
+                    '--bs-warning': '#FBBF24', '--bs-warning-rgb': '251,191,36',
+                    '--bs-danger': '#DC2626', '--bs-danger-rgb': '220,38,38'
+                }
+            }
+        };
+ 
+        function applyTheme(key) {
+            const theme = THEMES[key];
+            if (!theme) return;
+            const rootStyle = document.documentElement.style;
+            Object.entries(theme.vars).forEach(([varName, value]) => rootStyle.setProperty(varName, value));
+            currentThemeKey = key;
+            document.querySelectorAll('.theme-swatch').forEach(el => {
+                el.classList.toggle('active', el.dataset.theme === key);
+            });
+            if (document.getElementById('view-dashboard') && document.getElementById('view-dashboard').classList.contains('active') && currentUser) {
+                updateDashboard();
+            }
+        }
+ 
+        function renderThemeSwatches() {
+            const grid = document.getElementById('themeSwatchGrid');
+            if (!grid) return;
+            grid.innerHTML = Object.entries(THEMES).map(([key, theme]) => `
+                <div class="col">
+                    <div class="theme-swatch ${key === currentThemeKey ? 'active' : ''}" data-theme="${key}" onclick="applyTheme('${key}')">
+                        <div class="swatch-preview" style="background: linear-gradient(135deg, ${theme.vars['--app-sidebar-from']}, ${theme.vars['--app-sidebar-to']});"></div>
+                        <div class="swatch-name">${theme.name}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+ 
+        const SESSION_KEY = 'dms_session_user';
+ 
+        function saveSession(user) {
+            try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)); } catch (err) {}
+        }
+        function loadSession() {
+            try {
+                const raw = sessionStorage.getItem(SESSION_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch (err) { return null; }
+        }
+        function clearSession() {
+            try { sessionStorage.removeItem(SESSION_KEY); } catch (err) {}
+        }
+ 
+        function enterApp(user, isRestoring) {
+            currentUser = user;
+            saveSession(user);
+ 
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-screen').style.display = 'block';
+ 
+            document.getElementById('user-display-name').innerText = currentUser.name;
+            document.getElementById('user-display-role').innerText = currentUser.role.toUpperCase();
+            document.getElementById('user-display-role').className = currentUser.role === 'admin' ? 'badge bg-danger mt-1' : 'badge bg-info mt-1';
+ 
+            const adminElements = document.querySelectorAll('.admin-only');
+            adminElements.forEach(el => {
+                el.style.display = (currentUser.role === 'admin') ? 'block' : 'none';
+            });
+ 
+            loadAppData(isRestoring);
+            startAutoRefresh();
+        }
+ 
+        document.addEventListener("DOMContentLoaded", function() {
+            docModal = new bootstrap.Modal(document.getElementById('docModal'));
+            userModal = new bootstrap.Modal(document.getElementById('userModal'));
+            importPreviewModal = new bootstrap.Modal(document.getElementById('importPreviewModal'));
+ 
+            currentThemeKey = 'graysunset';
+            applyTheme('graysunset');
+            renderThemeSwatches();
+            applyLogo(DEFAULT_LOGO_URL);
+ 
+            populateDepartmentOptions(DEFAULT_DEPARTMENTS);
+            
+            document.getElementById('sidebarCollapse').addEventListener('click', function () {
+                document.getElementById('sidebar').classList.toggle('active');
+                document.getElementById('content').classList.toggle('active');
+                updateSidebarOverlay();
+            });
+ 
+            window.addEventListener('resize', updateSidebarOverlay);
+ 
+            gsRun('getSystemSettings', [], function (settings) {
+                if (settings && settings.logoUrl) applyLogo(settings.logoUrl);
+            }, { timeoutMs: 15000 });
+ 
+            const savedUser = loadSession();
+            if (savedUser) {
+                enterApp(savedUser, true);
+            }
+        });
+ 
+        // สร้าง <option> ของ "งาน" ตามฝ่ายที่เลือกไว้ ให้กับ select ปลายทางที่ระบุ
+        function populateSubDeptSelect(selectEl, deptName, placeholderText, allowAll) {
+            if (!selectEl) return;
+            const subs = (deptName && appDepartments[deptName]) ? appDepartments[deptName] : [];
+            let html = '';
+            if (allowAll) {
+                html += '<option value="all">ทุกงาน</option>';
+            } else {
+                html += `<option value="">${deptName ? '-- เลือกงาน --' : placeholderText}</option>`;
+            }
+            html += subs.map(s => `<option value="${s}">${s}</option>`).join('');
+            selectEl.innerHTML = html;
+        }
+ 
+        function populateDepartmentOptions(departments) {
+            appDepartments = departments || {};
+            const deptNames = Object.keys(appDepartments);
+ 
+            // Select ฝ่ายในฟอร์มเพิ่ม/แก้ไขเอกสาร
+            const docSelect = document.getElementById('docDepartment');
+            const currentDocVal = docSelect.value;
+            docSelect.innerHTML = '<option value="">-- เลือกฝ่าย --</option>' +
+                deptNames.map(d => `<option value="${d}">${d}</option>`).join('');
+            if (deptNames.includes(currentDocVal)) {
+                docSelect.value = currentDocVal;
+                populateSubDeptSelect(document.getElementById('docSubDepartment'), currentDocVal, '-- เลือกฝ่ายก่อน --', false);
+            } else {
+                populateSubDeptSelect(document.getElementById('docSubDepartment'), '', '-- เลือกฝ่ายก่อน --', false);
+            }
+ 
+            // Select ฝ่ายในตัวกรอง (Dashboard และค้นหา) - มีตัวเลือก "ทุกฝ่าย"
+            const filterSelectIds = ['dashDept', 'searchDept'];
+            filterSelectIds.forEach(id => {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                const currentVal = sel.value || 'all';
+                sel.innerHTML = '<option value="all">ทุกฝ่าย</option>' +
+                    deptNames.map(d => `<option value="${d}">${d}</option>`).join('');
+                const stillExists = Array.from(sel.options).some(o => o.value === currentVal);
+                sel.value = stillExists ? currentVal : 'all';
+ 
+                const subSelId = id === 'dashDept' ? 'dashSubDept' : 'searchSubDept';
+                const subSel = document.getElementById(subSelId);
+                if (subSel) {
+                    populateSubDeptSelect(subSel, sel.value === 'all' ? '' : sel.value, '', true);
+                }
+            });
+        }
+ 
+        function onDocDepartmentChange() {
+            const deptVal = document.getElementById('docDepartment').value;
+            populateSubDeptSelect(document.getElementById('docSubDepartment'), deptVal, '-- เลือกฝ่ายก่อน --', false);
+        }
+ 
+        function onDashDeptChange() {
+            const deptVal = document.getElementById('dashDept').value;
+            populateSubDeptSelect(document.getElementById('dashSubDept'), deptVal === 'all' ? '' : deptVal, '', true);
+            updateDashboard();
+        }
+ 
+        function onSearchDeptChange() {
+            const deptVal = document.getElementById('searchDept').value;
+            populateSubDeptSelect(document.getElementById('searchSubDept'), deptVal === 'all' ? '' : deptVal, '', true);
+        }
+ 
+        function startAutoRefresh() {
+            stopAutoRefresh();
+            autoRefreshTimer = setInterval(function () {
+                if (currentUser) refreshData(false);
+            }, AUTO_REFRESH_MS);
+        }
+ 
+        function stopAutoRefresh() {
+            if (autoRefreshTimer) {
+                clearInterval(autoRefreshTimer);
+                autoRefreshTimer = null;
+            }
+        }
+ 
+        function updateLastRefreshLabel() {
+            const label = document.getElementById('last-refresh-label');
+            if (!label) return;
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            label.innerText = 'อัปเดตล่าสุด ' + hh + ':' + mm + ' น.';
+        }
+ 
+        function showAutoRefreshToast() {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2500,
+                timerProgressBar: true
+            });
+            Toast.fire({ icon: 'success', title: 'อัปเดตข้อมูลอัตโนมัติแล้ว' });
+        }
+ 
+        function refreshData(isManual) {
+            if (!currentUser) return;
+ 
+            if (isManual) {
+                Swal.fire({ title: 'กำลังรีเฟรชข้อมูล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+            }
+ 
+            gsRun('getInitialData', [], function (data) {
+                appDocuments = data.docs;
+                appUsers = data.users;
+                populateDepartmentOptions(data.departments && Object.keys(data.departments).length ? data.departments : DEFAULT_DEPARTMENTS);
+ 
+                populateYearOptions();
+                updateDashboard();
+ 
+                if (document.getElementById('view-doc-list').classList.contains('active')) {
+                    renderDocList(currentDocType);
+                }
+                if (currentUser.role === 'admin' && document.getElementById('view-users').classList.contains('active')) {
+                    renderUserList();
+                }
+ 
+                gsRun('getSystemSettings', [], function (settings) {
+                    applySystemSettings(settings);
+                    updateLastRefreshLabel();
+ 
+                    if (isManual) {
+                        Swal.close();
+                        Swal.fire({ title: 'รีเฟรชข้อมูลเรียบร้อย', icon: 'success', timer: 900, showConfirmButton: false });
+                    } else {
+                        showAutoRefreshToast();
+                    }
+                });
+            }, { timeoutMs: isManual ? 20000 : 30000 });
+        }
+ 
+        function handleLogin(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+ 
+            Swal.fire({ title: 'กำลังตรวจสอบข้อมูล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+ 
+            gsRun('checkLogin', [user, pass], function(response) {
+                if(response.status === 'success') {
+                    enterApp(response.user, false);
+                } else {
+                    Swal.fire('ข้อผิดพลาด', response.message, 'error');
+                }
+            });
+        }
+ 
+        function loadAppData(isRestoring) {
+            Swal.fire({
+                title: isRestoring ? 'กำลังโหลดข้อมูล...' : 'กำลังโหลดข้อมูลจากระบบ...',
+                allowOutsideClick: false, didOpen: () => { Swal.showLoading() }
+            });
+            
+            gsRun('getInitialData', [], function(data) {
+                appDocuments = data.docs;
+                appUsers = data.users;
+                populateDepartmentOptions(data.departments && Object.keys(data.departments).length ? data.departments : DEFAULT_DEPARTMENTS);
+                
+                populateYearOptions();
+                updateDashboard();
+                if(currentUser.role === 'admin') {
+                    renderUserList();
+                }
+ 
+                gsRun('getSystemSettings', [], function(settings) {
+                    applySystemSettings(settings);
+                    updateLastRefreshLabel();
+                    Swal.close();
+                    if (!isRestoring) {
+                        Swal.fire({ title: 'เข้าสู่ระบบสำเร็จ', icon: 'success', timer: 1000, showConfirmButton: false });
+                    }
+                });
+            });
+        }
+ 
+        function applySystemSettings(settings) {
+            appSettings = settings || { orgName: '', theme: 'graysunset', logoUrl: DEFAULT_LOGO_URL };
+ 
+            const orgDisplay = document.getElementById('org-name-display');
+            if (appSettings.orgName) {
+                orgDisplay.innerText = appSettings.orgName;
+                orgDisplay.style.display = 'block';
+            } else {
+                orgDisplay.style.display = 'none';
+            }
+ 
+            const orgInput = document.getElementById('settingOrgName');
+            if (orgInput) orgInput.value = appSettings.orgName || '';
+ 
+            const logoUrl = appSettings.logoUrl || DEFAULT_LOGO_URL;
+            applyLogo(logoUrl);
+            const logoInput = document.getElementById('settingLogoUrl');
+            if (logoInput) logoInput.value = appSettings.logoUrl || '';
+            const logoPreview = document.getElementById('settingLogoPreview');
+            if (logoPreview) logoPreview.src = logoUrl;
+ 
+            if (appSettings.theme && THEMES[appSettings.theme]) {
+                applyTheme(appSettings.theme);
+                renderThemeSwatches();
+            }
+        }
+ 
+        function handleLogout() {
+            Swal.fire({
+                title: 'ยืนยันการออกจากระบบ?', icon: 'warning', showCancelButton: true,
+                confirmButtonText: 'ออกจากระบบ', cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    currentUser = null;
+                    clearSession();
+                    stopAutoRefresh();
+                    document.getElementById('app-screen').style.display = 'none';
+                    document.getElementById('login-screen').style.display = 'flex';
+                    document.getElementById('username').value = 'admin';
+                    document.getElementById('password').value = '1234';
+                }
+            });
+        }
+ 
+        // บนมือถือ คลาส "active" ของ #sidebar หมายถึง "ถูกซ่อนอยู่" (ตรงข้ามกับพฤติกรรมบนจอใหญ่)
+        // ฟังก์ชันนี้จะแสดง/ซ่อนฉากทึบด้านหลังให้ตรงกับสถานะเมนูปัจจุบันเสมอ
+        function updateSidebarOverlay() {
+            const overlay = document.getElementById('sidebar-overlay');
+            if (!overlay) return;
+            const sidebarEl = document.getElementById('sidebar');
+            const isMobile = window.innerWidth <= 768;
+            // บนมือถือ คลาส .active ทำให้เมนู "แสดง" (ตรงข้ามกับความหมายบนจอใหญ่)
+            const isMenuOpen = isMobile && sidebarEl.classList.contains('active');
+            overlay.classList.toggle('show', isMenuOpen);
+        }
+ 
+        function closeMobileSidebar() {
+            // บนจอมือถือ ต้อง "เอา" คลาส active ออกเพื่อซ่อนเมนู (ตรงข้ามกับพฤติกรรมบนจอใหญ่)
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('content').classList.remove('active');
+            updateSidebarOverlay();
+        }
+ 
+        function switchMenu(menuId, el) {
+            document.querySelectorAll('#sidebar ul li').forEach(li => li.classList.remove('active'));
+            if(el) el.classList.add('active');
+ 
+            document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+ 
+            if(menuId === 'dashboard') {
+                document.getElementById('view-dashboard').classList.add('active');
+                updateDashboard();
+            } else if (menuId.startsWith('doc-')) {
+                document.getElementById('view-doc-list').classList.add('active');
+                currentDocType = menuId;
+                renderDocList(menuId);
+            } else if (menuId === 'users') {
+                document.getElementById('view-users').classList.add('active');
+                renderUserList();
+            } else {
+                document.getElementById('view-' + menuId).classList.add('active');
+            }
+            
+            if (window.innerWidth <= 768) {
+                closeMobileSidebar();
+            }
+        }
+ 
+        function getDocTypeName(type) {
+            const types = {
+                'doc-in': 'หนังสือรับ',
+                'doc-out': 'หนังสือส่ง',
+                'doc-circular': 'หนังสือเวียน',
+                'doc-internal': 'หนังสือภายใน',
+                'doc-urgent': 'หนังสือด่วน',
+                'doc-general': 'เอกสารทั่วไป'
+            };
+            return types[type] || 'เอกสาร';
+        }
+ 
+        function renderDocList(type) {
+            document.getElementById('doc-page-title').innerText = getDocTypeName(type);
+            const tbody = document.getElementById('doc-table-body');
+            tbody.innerHTML = '';
+ 
+            const filteredDocs = appDocuments.filter(d => d.type === type);
+            
+            if(filteredDocs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">ไม่มีข้อมูลเอกสาร</td></tr>';
+                return;
+            }
+ 
+            filteredDocs.forEach(doc => {
+                const tr = document.createElement('tr');
+                let badgeColor = 'bg-secondary';
+                if(doc.status === 'ใหม่') badgeColor = 'bg-danger';
+                if(doc.status === 'รออนุมัติ' || doc.status === 'แก้ไขแล้ว') badgeColor = 'bg-warning text-dark';
+                if(doc.status === 'ประกาศ' || doc.status === 'อ่านแล้ว') badgeColor = 'bg-success';
+ 
+                let actionBtns = `<button class="btn btn-sm btn-info text-white me-1 mb-1" title="ดูไฟล์/ดาวน์โหลด" onclick="previewDoc('${doc.id}')"><i class="fas fa-eye"></i></button>`;
+                
+                if (currentUser && currentUser.role === 'admin') {
+                    actionBtns += `
+                        <button class="btn btn-sm btn-warning text-dark me-1 mb-1" title="แก้ไข" onclick="editDoc('${doc.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger mb-1" title="ลบ" onclick="deleteDoc('${doc.id}')"><i class="fas fa-trash"></i></button>
+                    `;
+                }
+ 
+                const deptCell = doc.department
+                    ? `<span class="badge bg-secondary d-block mb-1">${doc.department}</span>${doc.subDepartment ? `<span class="badge bg-light text-dark border">${doc.subDepartment}</span>` : ''}`
+                    : '-';
+ 
+                tr.innerHTML = `
+                    <td class="fw-bold">${doc.no}</td>
+                    <td>${doc.title}</td>
+                    <td>${doc.date}</td>
+                    <td>${doc.from}</td>
+                    <td>${deptCell}</td>
+                    <td><span class="status-badge ${badgeColor}">${doc.status}</span></td>
+                    <td>${actionBtns}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+ 
+        function openDocModal() {
+            document.getElementById('docId').value = '';
+            document.getElementById('docNo').value = '';
+            document.getElementById('docTitle').value = '';
+            document.getElementById('docDate').value = '';
+            document.getElementById('docFrom').value = '';
+            document.getElementById('docDepartment').value = '';
+            populateSubDeptSelect(document.getElementById('docSubDepartment'), '', '-- เลือกฝ่ายก่อน --', false);
+            document.getElementById('docFile').value = '';
+            document.getElementById('docModalLabel').innerText = 'เพิ่ม ' + getDocTypeName(currentDocType);
+            docModal.show();
+        }
+ 
+        function editDoc(id) {
+            const doc = appDocuments.find(d => d.id == id);
+            if(doc) {
+                document.getElementById('docId').value = doc.id;
+                document.getElementById('docNo').value = doc.no;
+                document.getElementById('docTitle').value = doc.title;
+                document.getElementById('docDate').value = doc.date; 
+                document.getElementById('docFrom').value = doc.from;
+                document.getElementById('docDepartment').value = doc.department || '';
+                populateSubDeptSelect(document.getElementById('docSubDepartment'), doc.department || '', '-- เลือกฝ่ายก่อน --', false);
+                document.getElementById('docSubDepartment').value = doc.subDepartment || '';
+                document.getElementById('docModalLabel').innerText = 'แก้ไข ' + getDocTypeName(doc.type);
+                docModal.show();
+            }
+        }
+ 
+        function getBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+        }
+ 
+        async function saveDocument(e) {
+            if (e && e.preventDefault) e.preventDefault();
+ 
+            const departmentVal = document.getElementById('docDepartment').value;
+            if (!departmentVal) {
+                return Swal.fire('แจ้งเตือน', 'กรุณาเลือกฝ่ายที่รับผิดชอบเอกสารนี้', 'warning');
+            }
+            const subDepartmentVal = document.getElementById('docSubDepartment').value;
+            if (!subDepartmentVal) {
+                return Swal.fire('แจ้งเตือน', 'กรุณาเลือกงานภายในฝ่ายที่รับผิดชอบเอกสารนี้', 'warning');
+            }
+            
+            const fileInput = document.getElementById('docFile');
+            const docId = document.getElementById('docId').value;
+            
+            let docObj = {
+                id: docId,
+                type: currentDocType,
+                no: document.getElementById('docNo').value,
+                title: document.getElementById('docTitle').value,
+                date: document.getElementById('docDate').value,
+                from: document.getElementById('docFrom').value,
+                department: departmentVal,
+                subDepartment: subDepartmentVal,
+                createdBy: currentUser.username,
+                existingFileUrl: ""
+            };
+ 
+            if(docId) {
+                const existingDoc = appDocuments.find(d => d.id == docId);
+                if(existingDoc) docObj.existingFileUrl = existingDoc.fileUrl;
+            }
+ 
+            Swal.fire({ title: 'กำลังบันทึกข้อมูลและอัปโหลดไฟล์...', text: 'กรุณารอสักครู่ (อาจใช้เวลา 10-30 วินาที)', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+ 
+            try {
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    docObj.fileData = await getBase64(file);
+                    docObj.fileName = file.name;
+                    docObj.mimeType = file.type;
+                }
+ 
+                gsRun('saveDocumentRecord', [docObj], function(res) {
+                    if(res.status === 'success') {
+                        gsRun('getInitialData', [], function(data) {
+                            appDocuments = data.docs;
+                            docModal.hide();
+                            renderDocList(currentDocType);
+                            populateYearOptions();
+                            updateDashboard();
+                            Swal.fire('สำเร็จ', 'บันทึกข้อมูลและอัปโหลดไฟล์เรียบร้อยแล้ว', 'success');
+                        });
+                    } else {
+                        Swal.fire('ข้อผิดพลาด', res.message, 'error');
+                    }
+                }, { timeoutMs: 40000 });
+ 
+            } catch (err) {
+                Swal.fire('ข้อผิดพลาด', 'มีปัญหาในการอ่านไฟล์: ' + err, 'error');
+            }
+        }
+ 
+        function deleteDoc(id) {
+            Swal.fire({
+                title: 'ยืนยันการลบ?', text: "คุณจะไม่สามารถกู้คืนเอกสารนี้ได้!", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'ใช่, ลบเลย!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({ title: 'กำลังลบข้อมูล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+                    
+                    gsRun('deleteDocument', [id, currentUser.username], function(res) {
+                        if(res.status === 'success') {
+                            appDocuments = appDocuments.filter(d => d.id != id);
+                            renderDocList(currentDocType);
+                            updateDashboard();
+                            Swal.fire('ลบแล้ว!', 'เอกสารถูกลบออกจากระบบ', 'success');
+                        } else {
+                            Swal.fire('ข้อผิดพลาด', res.message, 'error');
+                        }
+                    });
+                }
+            });
+        }
+ 
+        function previewDoc(id) {
+            const doc = appDocuments.find(d => d.id == id);
+            if (doc && doc.fileUrl && doc.fileUrl.trim() !== '') {
+                window.open(doc.fileUrl, '_blank');
+            } else {
+                Swal.fire({
+                    title: 'ไม่พบไฟล์แนบ', text: 'เอกสารนี้ยังไม่ได้อัปโหลดไฟล์ในระบบ', icon: 'warning', confirmButtonText: 'ตกลง'
+                });
+            }
+        }
+ 
+        function performSearch() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            const type = document.getElementById('searchType').value;
+            const dept = document.getElementById('searchDept').value;
+            const subDept = document.getElementById('searchSubDept').value;
+            const resultsDiv = document.getElementById('search-results');
+            
+            if(!keyword) return Swal.fire('แจ้งเตือน', 'กรุณาระบุคำค้นหา', 'warning');
+ 
+            const results = appDocuments.filter(d => {
+                const matchKeyword = d.no.toLowerCase().includes(keyword) || d.title.toLowerCase().includes(keyword);
+                const matchType = (type === 'all') ? true : (d.type === type);
+                const matchDept = (dept === 'all') ? true : (d.department === dept);
+                const matchSubDept = (subDept === 'all') ? true : (d.subDepartment === subDept);
+                return matchKeyword && matchType && matchDept && matchSubDept;
+            });
+ 
+            if(results.length > 0) {
+                let html = `<div class="alert alert-success">พบข้อมูล ${results.length} รายการ</div><ul class="list-group">`;
+                results.forEach(r => {
+                    const deptText = r.department ? '| ' + r.department + (r.subDepartment ? ' - ' + r.subDepartment : '') : '';
+                    html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div><strong>${r.no}</strong> - ${r.title} <br>
+                        <small class="text-muted">${getDocTypeName(r.type)} ${deptText} | วันที่: ${r.date}</small></div>
+                        <button class="btn btn-sm btn-info text-white" onclick="previewDoc('${r.id}')">ดูไฟล์</button>
+                    </li>`;
+                });
+                html += '</ul>';
+                resultsDiv.innerHTML = html;
+            } else {
+                resultsDiv.innerHTML = '<div class="alert alert-warning">ไม่พบเอกสารที่ค้นหา</div>';
+            }
+        }
+ 
+        function renderUserList() {
+            const tbody = document.getElementById('user-table-body');
+            tbody.innerHTML = '';
+            
+            appUsers.forEach(u => {
+                const tr = document.createElement('tr');
+                const roleBadge = u.role === 'admin' ? '<span class="badge bg-danger">Admin</span>' : '<span class="badge bg-info text-dark">User</span>';
+                
+                tr.innerHTML = `
+                    <td>${u.name}</td>
+                    <td>${u.username}</td>
+                    <td>${roleBadge}</td>
+                    <td><span class="badge bg-success">${u.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-warning text-dark me-1" onclick="editUser('${u.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+ 
+        function openUserModal() {
+            document.getElementById('userId').value = '';
+            document.getElementById('userName').value = '';
+            document.getElementById('userUsername').value = '';
+            document.getElementById('userPassword').value = '';
+            document.getElementById('userRole').value = 'user';
+            document.getElementById('userModalLabel').innerText = 'เพิ่มผู้ใช้ใหม่';
+            userModal.show();
+        }
+ 
+        function editUser(id) {
+            const user = appUsers.find(u => u.id == id);
+            if(user) {
+                document.getElementById('userId').value = user.id;
+                document.getElementById('userName').value = user.name;
+                document.getElementById('userUsername').value = user.username;
+                document.getElementById('userPassword').value = user.password;
+                document.getElementById('userRole').value = user.role;
+                document.getElementById('userModalLabel').innerText = 'แก้ไขข้อมูลผู้ใช้';
+                userModal.show();
+            }
+        }
+ 
+        function saveUser(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            Swal.fire({ title: 'กำลังบันทึกข้อมูล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+            
+            const userObj = {
+                id: document.getElementById('userId').value,
+                name: document.getElementById('userName').value,
+                username: document.getElementById('userUsername').value,
+                password: document.getElementById('userPassword').value,
+                role: document.getElementById('userRole').value,
+                status: 'Active'
+            };
+ 
+            gsRun('saveUserRecord', [userObj, currentUser.username], function(res) {
+                if(res.status === 'success') {
+                    gsRun('getUsers', [], function(users) {
+                        appUsers = users;
+                        userModal.hide();
+                        renderUserList();
+                        Swal.fire('สำเร็จ', 'บันทึกข้อมูลผู้ใช้เรียบร้อย', 'success');
+                    });
+                } else {
+                    Swal.fire('ข้อผิดพลาด', res.message, 'error');
+                }
+            });
+        }
+ 
+        function deleteUser(id) {
+            Swal.fire({
+                title: 'ยืนยันลบผู้ใช้?', icon: 'warning', showCancelButton: true,
+                confirmButtonColor: '#d33', confirmButtonText: 'ลบเลย!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({ title: 'กำลังลบ...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+                    
+                    gsRun('deleteUser', [id, currentUser.username], function(res) {
+                        if(res.status === 'success') {
+                            appUsers = appUsers.filter(u => u.id != id);
+                            renderUserList();
+                            Swal.fire('ลบแล้ว!', '', 'success');
+                        } else {
+                            Swal.fire('ผิดพลาด', res.message, 'error');
+                        }
+                    });
+                }
+            });
+        }
+ 
+        function downloadUserTemplate() {
+            const wsData = [
+                ['ชื่อ-นามสกุล', 'ชื่อผู้ใช้ (Username)', 'รหัสผ่าน', 'สิทธิ์ (admin/user)'],
+                ['สมชาย ใจดี', 'somchai.j', '123456', 'user'],
+                ['สมหญิง รักงาน', 'somying.r', '123456', 'admin']
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            ws['!cols'] = [{ wch: 25 }, { wch: 22 }, { wch: 15 }, { wch: 18 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'ผู้ใช้งาน');
+            XLSX.writeFile(wb, 'แบบฟอร์มนำเข้าผู้ใช้งาน.xlsx');
+        }
+ 
+        function triggerImportUser() {
+            document.getElementById('importUserFile').click();
+        }
+ 
+        function handleImportFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+ 
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const wb = XLSX.read(data, { type: 'array' });
+                    const sheet = wb.Sheets[wb.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                    processImportedUsers(rows);
+                } catch (err) {
+                    Swal.fire('ข้อผิดพลาด', 'ไม่สามารถอ่านไฟล์ Excel ได้ กรุณาตรวจสอบไฟล์: ' + err, 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+ 
+            e.target.value = '';
+        }
+ 
+        function processImportedUsers(rows) {
+            const parsed = [];
+            const errors = [];
+ 
+            rows.forEach((row, idx) => {
+                const rowNo = idx + 2;
+                const name = String(row['ชื่อ-นามสกุล'] ?? row['ชื่อ'] ?? '').trim();
+                const username = String(row['ชื่อผู้ใช้ (Username)'] ?? row['Username'] ?? row['ชื่อผู้ใช้'] ?? '').trim();
+                const password = String(row['รหัสผ่าน'] ?? row['Password'] ?? '').trim();
+                let role = String(row['สิทธิ์ (admin/user)'] ?? row['Role'] ?? row['สิทธิ์'] ?? 'user').trim().toLowerCase();
+                if (role !== 'admin') role = 'user';
+ 
+                if (!name || !username || !password) {
+                    errors.push(`แถวที่ ${rowNo}: ข้อมูลไม่ครบ (ต้องมีชื่อ, username และรหัสผ่าน)`);
+                    return;
+                }
+ 
+                const isDuplicate = appUsers.some(u => u.username.toLowerCase() === username.toLowerCase())
+                    || parsed.some(u => u.username.toLowerCase() === username.toLowerCase());
+                if (isDuplicate) {
+                    errors.push(`แถวที่ ${rowNo}: username "${username}" ซ้ำกับที่มีอยู่แล้ว จึงข้ามแถวนี้`);
+                    return;
+                }
+ 
+                parsed.push({ name, username, password, role, status: 'Active' });
+            });
+ 
+            if (parsed.length === 0) {
+                Swal.fire({
+                    title: 'ไม่พบข้อมูลที่นำเข้าได้',
+                    html: errors.length ? errors.join('<br>') : 'กรุณาตรวจสอบว่าไฟล์ตรงกับฟอร์มที่ดาวน์โหลดไป',
+                    icon: 'error'
+                });
+                return;
+            }
+ 
+            pendingImportUsers = parsed;
+            renderImportPreview(parsed, errors);
+            importPreviewModal.show();
+        }
+ 
+        function renderImportPreview(parsed, errors) {
+            document.getElementById('importPreviewCount').innerText = parsed.length;
+ 
+            const tbody = document.getElementById('importPreviewBody');
+            tbody.innerHTML = parsed.map(u => `
+                <tr>
+                    <td>${u.name}</td>
+                    <td>${u.username}</td>
+                    <td>${u.role === 'admin' ? '<span class="badge bg-danger">Admin</span>' : '<span class="badge bg-info">User</span>'}</td>
+                </tr>
+            `).join('');
+ 
+            const errBox = document.getElementById('importPreviewErrors');
+            if (errors.length > 0) {
+                errBox.style.display = 'block';
+                errBox.innerHTML = '<div class="alert alert-warning small mb-0"><strong><i class="fas fa-triangle-exclamation"></i> ข้ามแถวที่มีปัญหา ' + errors.length + ' แถว:</strong><br>' + errors.join('<br>') + '</div>';
+            } else {
+                errBox.style.display = 'none';
+                errBox.innerHTML = '';
+            }
+        }
+ 
+        function confirmImportUsers() {
+            if (pendingImportUsers.length === 0) return;
+            importPreviewModal.hide();
+ 
+            Swal.fire({
+                title: 'กำลังนำเข้าผู้ใช้งาน...',
+                text: `กำลังบันทึก ${pendingImportUsers.length} รายการ`,
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading() }
+            });
+ 
+            gsRun('importUserRecords', [pendingImportUsers, currentUser.username], function(res) {
+                if (res.status === 'success') {
+                    gsRun('getUsers', [], function(users) {
+                        appUsers = users;
+                        renderUserList();
+                        pendingImportUsers = [];
+                        Swal.fire('สำเร็จ', 'นำเข้าผู้ใช้งานเรียบร้อยแล้ว', 'success');
+                    });
+                } else {
+                    Swal.fire('ข้อผิดพลาด', res.message, 'error');
+                }
+            }, { timeoutMs: 40000 });
+        }
+ 
+        function saveSettings(e) {
+            if (e && e.preventDefault) e.preventDefault();
+ 
+            Swal.fire({ title: 'กำลังบันทึกการตั้งค่า...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+ 
+            const logoInputEl = document.getElementById('settingLogoUrl');
+            const settingsObj = {
+                orgName: document.getElementById('settingOrgName').value,
+                theme: currentThemeKey,
+                logoUrl: logoInputEl ? (logoInputEl.value.trim() || DEFAULT_LOGO_URL) : DEFAULT_LOGO_URL
+            };
+ 
+            gsRun('saveSystemSettings', [settingsObj], function(res) {
+                if (res.status === 'success') {
+                    applySystemSettings(settingsObj);
+                    Swal.fire('สำเร็จ', 'บันทึกการตั้งค่าระบบเรียบร้อยแล้ว', 'success');
+                } else {
+                    Swal.fire('ข้อผิดพลาด', res.message, 'error');
+                }
+            });
+        }
+ 
+        const THAI_MONTHS_SHORT = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+        const BE_OFFSET = 543;
+ 
+        function parseDocDate(dateStr) {
+            if (!dateStr) return null;
+            const dt = new Date(dateStr);
+            if (isNaN(dt.getTime())) return null;
+            return { year: dt.getFullYear(), month: dt.getMonth() };
+        }
+ 
+        function populateYearOptions() {
+            const yearSelect = document.getElementById('dashYear');
+            const previousValue = yearSelect.value || 'all';
+ 
+            const yearsCE = new Set();
+            appDocuments.forEach(d => {
+                const parsed = parseDocDate(d.date);
+                if (parsed) yearsCE.add(parsed.year);
+            });
+            const currentCE = new Date().getFullYear();
+            yearsCE.add(currentCE);
+ 
+            const sortedYearsCE = Array.from(yearsCE).sort((a, b) => b - a);
+ 
+            yearSelect.innerHTML = '<option value="all">ทุกปี</option>';
+            sortedYearsCE.forEach(y => {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = 'พ.ศ. ' + (y + BE_OFFSET);
+                yearSelect.appendChild(opt);
+            });
+ 
+            const stillExists = Array.from(yearSelect.options).some(o => o.value == previousValue);
+            yearSelect.value = stillExists ? previousValue : String(currentCE);
+        }
+ 
+        function resetDashboardFilter() {
+            document.getElementById('dashMonth').value = 'all';
+            populateYearOptions();
+            document.getElementById('dashYear').value = 'all';
+            document.getElementById('dashDept').value = 'all';
+            populateSubDeptSelect(document.getElementById('dashSubDept'), '', '', true);
+            updateDashboard();
+        }
+ 
+        function updateDashboard() {
+            const monthVal = document.getElementById('dashMonth').value;
+            const yearVal = document.getElementById('dashYear').value;
+            const deptVal = document.getElementById('dashDept') ? document.getElementById('dashDept').value : 'all';
+            const subDeptVal = document.getElementById('dashSubDept') ? document.getElementById('dashSubDept').value : 'all';
+ 
+            const filteredDocs = appDocuments.filter(d => {
+                const parsed = parseDocDate(d.date);
+                if (!parsed) return false;
+                const yearMatch = (yearVal === 'all') ? true : parsed.year === parseInt(yearVal);
+                const monthMatch = (monthVal === 'all') ? true : (parsed.month + 1) === parseInt(monthVal);
+                const deptMatch = (deptVal === 'all') ? true : (d.department === deptVal);
+                const subDeptMatch = (subDeptVal === 'all') ? true : (d.subDepartment === subDeptVal);
+                return yearMatch && monthMatch && deptMatch && subDeptMatch;
+            });
+ 
+            const inCount = filteredDocs.filter(d => d.type === 'doc-in').length;
+            const outCount = filteredDocs.filter(d => d.type === 'doc-out').length;
+            const cirCount = filteredDocs.filter(d => d.type === 'doc-circular').length;
+            const internalCount = filteredDocs.filter(d => d.type === 'doc-internal').length;
+            const urgentCount = filteredDocs.filter(d => d.type === 'doc-urgent').length;
+            const genCount = filteredDocs.filter(d => d.type === 'doc-general').length;
+ 
+            document.getElementById('stat-in').innerText = inCount;
+            document.getElementById('stat-out').innerText = outCount;
+            document.getElementById('stat-cir').innerText = cirCount;
+            document.getElementById('stat-internal').innerText = internalCount;
+            document.getElementById('stat-urgent').innerText = urgentCount;
+            document.getElementById('stat-gen').innerText = genCount;
+            document.getElementById('stat-total').innerText = filteredDocs.length;
+ 
+            const yearDocs = appDocuments.filter(d => {
+                const parsed = parseDocDate(d.date);
+                if (!parsed) return false;
+                const yearMatch = (yearVal === 'all') ? true : parsed.year === parseInt(yearVal);
+                const deptMatch = (deptVal === 'all') ? true : (d.department === deptVal);
+                const subDeptMatch = (subDeptVal === 'all') ? true : (d.subDepartment === subDeptVal);
+                return yearMatch && deptMatch && subDeptMatch;
+            });
+ 
+            const monthlyByType = {
+                'doc-in': Array(12).fill(0),
+                'doc-out': Array(12).fill(0),
+                'doc-circular': Array(12).fill(0),
+                'doc-internal': Array(12).fill(0),
+                'doc-urgent': Array(12).fill(0),
+                'doc-general': Array(12).fill(0)
+            };
+            yearDocs.forEach(d => {
+                const parsed = parseDocDate(d.date);
+                if (parsed && monthlyByType[d.type]) {
+                    monthlyByType[d.type][parsed.month]++;
+                }
+            });
+ 
+            const yearLabel = (yearVal === 'all') ? 'ทุกปี' : ('พ.ศ. ' + (parseInt(yearVal) + BE_OFFSET));
+            const monthLabel = (monthVal === 'all') ? '' : ' - เดือน' + document.getElementById('dashMonth').selectedOptions[0].text;
+            const deptLabel = (deptVal === 'all') ? '' : ' - ' + deptVal + (subDeptVal !== 'all' ? ' (' + subDeptVal + ')' : '');
+ 
+            document.getElementById('barChartTitle').innerText = 'สถิติเอกสารรายเดือน (' + yearLabel + deptLabel + ')';
+            document.getElementById('pieChartTitle').innerText = 'สัดส่วนประเภทเอกสาร (' + yearLabel + monthLabel + deptLabel + ')';
+ 
+            renderCharts(monthlyByType, inCount, outCount, cirCount, internalCount, urgentCount, genCount);
+        }
+ 
+        function renderCharts(monthlyByType, inC, outC, cirC, internalC, urgentC, genC) {
+            if(barChartInstance) barChartInstance.destroy();
+            if(pieChartInstance) pieChartInstance.destroy();
+ 
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            barChartInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: THAI_MONTHS_SHORT,
+                    datasets: [
+                        { label: 'รับ', data: monthlyByType['doc-in'], backgroundColor: '#2F8FEA' },
+                        { label: 'ส่ง', data: monthlyByType['doc-out'], backgroundColor: '#22C55E' },
+                        { label: 'เวียน', data: monthlyByType['doc-circular'], backgroundColor: '#8B5CF6' },
+                        { label: 'ภายใน', data: monthlyByType['doc-internal'], backgroundColor: '#6B7280' },
+                        { label: 'ด่วน', data: monthlyByType['doc-urgent'], backgroundColor: '#EF4444' },
+                        { label: 'ทั่วไป', data: monthlyByType['doc-general'], backgroundColor: '#F5A524' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+                    }
+                }
+            });
+ 
+            const ctxPie = document.getElementById('pieChart').getContext('2d');
+            pieChartInstance = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: ['รับ', 'ส่ง', 'เวียน', 'ภายใน', 'ด่วน', 'ทั่วไป'],
+                    datasets: [{
+                        data: [inC, outC, cirC, internalC, urgentC, genC],
+                        backgroundColor: ['#2F8FEA', '#22C55E', '#8B5CF6', '#6B7280', '#EF4444', '#F5A524']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+    </script>
+</body>
+</html>
