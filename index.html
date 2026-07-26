@@ -545,9 +545,14 @@
  
         /* สีสดทั้งระบบ: ตัวหนังสือบนแบดจ์/ปุ่มใช้สีขาวเพื่อความคมชัดบนพื้นสีสด */
         .badge {
-            color: var(--app-btn-text) !important;
-            font-weight: 600;
-        }
+    font-weight: 600;
+}
+.badge:not(.text-dark) {
+    color: var(--app-btn-text) !important;
+}
+.badge.text-dark {
+    color: #33394a !important;
+}
         .btn-primary, .btn-secondary, .btn-success, .btn-info, .btn-warning, .btn-danger {
             color: var(--app-btn-text);
             border: none;
@@ -1083,9 +1088,15 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">งาน <span class="text-danger">*</span></label>
-                                <select class="form-select" id="docSubDepartment" required>
+                                <select class="form-select" id="docSubDepartment" required onchange="onDocSubDepartmentChange()">
                                     <option value="">-- เลือกฝ่ายก่อน --</option>
                                 </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3" id="docSubDepartmentOtherWrap" style="display:none;">
+                            <div class="col-12">
+                                <label class="form-label">ระบุชื่องาน <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="docSubDepartmentOther" placeholder="พิมพ์ชื่องาน...">
                             </div>
                         </div>
                         <div class="mb-3">
@@ -1287,21 +1298,21 @@
             }
         }
  
-       const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyYvA3Pbi3jBecrFzsl3fBRZAE_76B__0cAoamZGO26KeVI6Kof06lPMEccVOossPa8/exec'; // เปลี่ยนเป็นลิงก์ /exec ของคุณ
-
+       const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz-QHZQOy5IU-WWX7y4mXWULGE0_nSqRek9YHJa9pWzdbPfknX-BGLxD0YboXu2MPYT/exec'; // เปลี่ยนเป็นลิงก์ /exec ของคุณ
+ 
 function gsRun(functionName, args, onSuccess, options) {
     options = options || {};
     const timeoutMs = options.timeoutMs || 20000;
     let done = false;
     const controller = new AbortController();
-
+ 
     const timer = setTimeout(function () {
         if (done) return;
         done = true;
         controller.abort();
         Swal.fire('หมดเวลาเชื่อมต่อ', 'เซิร์ฟเวอร์ไม่ตอบสนองภายในเวลาที่กำหนด', 'error');
     }, timeoutMs);
-
+ 
     fetch(WEBAPP_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -1509,8 +1520,22 @@ function gsRun(functionName, args, onSuccess, options) {
             }
         });
  
+        // หา "งาน" ที่ถูกพิมพ์เองผ่าน "อื่นๆ (ระบุ)" ในเอกสารจริง แต่ไม่ได้อยู่ในโครงสร้างฝ่าย/งานมาตรฐาน
+        // ใช้เติมลงในตัวกรองของ Dashboard/ค้นหา เพื่อให้เลือกกรองเอกสารกลุ่มนี้ได้
+        function getCustomSubDepartments(deptName) {
+            if (!deptName) return [];
+            const knownSubs = appDepartments[deptName] || [];
+            const found = new Set();
+            appDocuments.forEach(d => {
+                if (d.department === deptName && d.subDepartment && !knownSubs.includes(d.subDepartment)) {
+                    found.add(d.subDepartment);
+                }
+            });
+            return Array.from(found).sort();
+        }
+ 
         // สร้าง <option> ของ "งาน" ตามฝ่ายที่เลือกไว้ ให้กับ select ปลายทางที่ระบุ
-        function populateSubDeptSelect(selectEl, deptName, placeholderText, allowAll) {
+        function populateSubDeptSelect(selectEl, deptName, placeholderText, allowAll, includeOther, customSubs) {
             if (!selectEl) return;
             const subs = (deptName && appDepartments[deptName]) ? appDepartments[deptName] : [];
             let html = '';
@@ -1520,6 +1545,12 @@ function gsRun(functionName, args, onSuccess, options) {
                 html += `<option value="">${deptName ? '-- เลือกงาน --' : placeholderText}</option>`;
             }
             html += subs.map(s => `<option value="${s}">${s}</option>`).join('');
+            if (customSubs && customSubs.length) {
+                html += customSubs.map(s => `<option value="${s}">${s} (อื่นๆ)</option>`).join('');
+            }
+            if (includeOther) {
+                html += '<option value="__other__">อื่นๆ (ระบุ)</option>';
+            }
             selectEl.innerHTML = html;
         }
  
@@ -1534,9 +1565,9 @@ function gsRun(functionName, args, onSuccess, options) {
                 deptNames.map(d => `<option value="${d}">${d}</option>`).join('');
             if (deptNames.includes(currentDocVal)) {
                 docSelect.value = currentDocVal;
-                populateSubDeptSelect(document.getElementById('docSubDepartment'), currentDocVal, '-- เลือกฝ่ายก่อน --', false);
+                populateSubDeptSelect(document.getElementById('docSubDepartment'), currentDocVal, '-- เลือกฝ่ายก่อน --', false, true);
             } else {
-                populateSubDeptSelect(document.getElementById('docSubDepartment'), '', '-- เลือกฝ่ายก่อน --', false);
+                populateSubDeptSelect(document.getElementById('docSubDepartment'), '', '-- เลือกฝ่ายก่อน --', false, true);
             }
  
             // Select ฝ่ายในตัวกรอง (Dashboard และค้นหา) - มีตัวเลือก "ทุกฝ่าย"
@@ -1553,25 +1584,38 @@ function gsRun(functionName, args, onSuccess, options) {
                 const subSelId = id === 'dashDept' ? 'dashSubDept' : 'searchSubDept';
                 const subSel = document.getElementById(subSelId);
                 if (subSel) {
-                    populateSubDeptSelect(subSel, sel.value === 'all' ? '' : sel.value, '', true);
+                    const deptForSub = sel.value === 'all' ? '' : sel.value;
+                    populateSubDeptSelect(subSel, deptForSub, '', true, false, getCustomSubDepartments(deptForSub));
                 }
             });
         }
  
         function onDocDepartmentChange() {
             const deptVal = document.getElementById('docDepartment').value;
-            populateSubDeptSelect(document.getElementById('docSubDepartment'), deptVal, '-- เลือกฝ่ายก่อน --', false);
+            populateSubDeptSelect(document.getElementById('docSubDepartment'), deptVal, '-- เลือกฝ่ายก่อน --', false, true);
+            onDocSubDepartmentChange();
+        }
+ 
+        function onDocSubDepartmentChange() {
+            const val = document.getElementById('docSubDepartment').value;
+            const wrap = document.getElementById('docSubDepartmentOtherWrap');
+            if (val === '__other__') {
+                wrap.style.display = 'block';
+            } else {
+                wrap.style.display = 'none';
+                document.getElementById('docSubDepartmentOther').value = '';
+            }
         }
  
         function onDashDeptChange() {
-            const deptVal = document.getElementById('dashDept').value;
-            populateSubDeptSelect(document.getElementById('dashSubDept'), deptVal === 'all' ? '' : deptVal, '', true);
+            const deptVal = document.getElementById('dashDept').value === 'all' ? '' : document.getElementById('dashDept').value;
+            populateSubDeptSelect(document.getElementById('dashSubDept'), deptVal, '', true, false, getCustomSubDepartments(deptVal));
             updateDashboard();
         }
  
         function onSearchDeptChange() {
-            const deptVal = document.getElementById('searchDept').value;
-            populateSubDeptSelect(document.getElementById('searchSubDept'), deptVal === 'all' ? '' : deptVal, '', true);
+            const deptVal = document.getElementById('searchDept').value === 'all' ? '' : document.getElementById('searchDept').value;
+            populateSubDeptSelect(document.getElementById('searchSubDept'), deptVal, '', true, false, getCustomSubDepartments(deptVal));
         }
  
         function startAutoRefresh() {
@@ -1840,7 +1884,9 @@ function gsRun(functionName, args, onSuccess, options) {
             document.getElementById('docDate').value = '';
             document.getElementById('docFrom').value = '';
             document.getElementById('docDepartment').value = '';
-            populateSubDeptSelect(document.getElementById('docSubDepartment'), '', '-- เลือกฝ่ายก่อน --', false);
+            populateSubDeptSelect(document.getElementById('docSubDepartment'), '', '-- เลือกฝ่ายก่อน --', false, true);
+            document.getElementById('docSubDepartmentOther').value = '';
+            document.getElementById('docSubDepartmentOtherWrap').style.display = 'none';
             document.getElementById('docFile').value = '';
             document.getElementById('docModalLabel').innerText = 'เพิ่ม ' + getDocTypeName(currentDocType);
             docModal.show();
@@ -1855,8 +1901,23 @@ function gsRun(functionName, args, onSuccess, options) {
                 document.getElementById('docDate').value = doc.date; 
                 document.getElementById('docFrom').value = doc.from;
                 document.getElementById('docDepartment').value = doc.department || '';
-                populateSubDeptSelect(document.getElementById('docSubDepartment'), doc.department || '', '-- เลือกฝ่ายก่อน --', false);
-                document.getElementById('docSubDepartment').value = doc.subDepartment || '';
+                populateSubDeptSelect(document.getElementById('docSubDepartment'), doc.department || '', '-- เลือกฝ่ายก่อน --', false, true);
+ 
+                const subSelect = document.getElementById('docSubDepartment');
+                const knownSubs = (doc.department && appDepartments[doc.department]) ? appDepartments[doc.department] : [];
+                const otherWrap = document.getElementById('docSubDepartmentOtherWrap');
+                const otherInput = document.getElementById('docSubDepartmentOther');
+ 
+                if (doc.subDepartment && !knownSubs.includes(doc.subDepartment)) {
+                    subSelect.value = '__other__';
+                    otherWrap.style.display = 'block';
+                    otherInput.value = doc.subDepartment;
+                } else {
+                    subSelect.value = doc.subDepartment || '';
+                    otherWrap.style.display = 'none';
+                    otherInput.value = '';
+                }
+ 
                 document.getElementById('docModalLabel').innerText = 'แก้ไข ' + getDocTypeName(doc.type);
                 docModal.show();
             }
@@ -1878,9 +1939,16 @@ function gsRun(functionName, args, onSuccess, options) {
             if (!departmentVal) {
                 return Swal.fire('แจ้งเตือน', 'กรุณาเลือกฝ่ายที่รับผิดชอบเอกสารนี้', 'warning');
             }
-            const subDepartmentVal = document.getElementById('docSubDepartment').value;
+            let subDepartmentVal = document.getElementById('docSubDepartment').value;
             if (!subDepartmentVal) {
                 return Swal.fire('แจ้งเตือน', 'กรุณาเลือกงานภายในฝ่ายที่รับผิดชอบเอกสารนี้', 'warning');
+            }
+            if (subDepartmentVal === '__other__') {
+                const otherVal = document.getElementById('docSubDepartmentOther').value.trim();
+                if (!otherVal) {
+                    return Swal.fire('แจ้งเตือน', 'กรุณาระบุชื่องาน', 'warning');
+                }
+                subDepartmentVal = otherVal;
             }
             
             const fileInput = document.getElementById('docFile');
