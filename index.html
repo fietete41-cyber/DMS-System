@@ -1287,38 +1287,42 @@
             }
         }
  
-        function gsRun(functionName, args, onSuccess, options) {
-            options = options || {};
-            const timeoutMs = options.timeoutMs || 20000;
-            let done = false;
- 
-            const timer = setTimeout(function () {
-                if (done) return;
-                done = true;
-                Swal.fire('หมดเวลาเชื่อมต่อ', 'เซิร์ฟเวอร์ไม่ตอบสนองภายในเวลาที่กำหนด กรุณาตรวจสอบการเชื่อมต่อ หรือฟังก์ชัน "' + functionName + '" ฝั่ง Apps Script', 'error');
-            }, timeoutMs);
- 
-            if (typeof google === 'undefined' || !google.script || !google.script.run) {
-                clearTimeout(timer);
-                Swal.fire('ไม่พบ google.script.run', 'หน้านี้ต้องรันภายใน Google Apps Script Web App เท่านั้น (เปิดผ่านลิงก์ /exec) จึงจะเชื่อมต่อฐานข้อมูลได้', 'error');
-                return;
-            }
- 
-            google.script.run
-                .withSuccessHandler(function (result) {
-                    if (done) return;
-                    done = true;
-                    clearTimeout(timer);
-                    onSuccess(result);
-                })
-                .withFailureHandler(function (error) {
-                    if (done) return;
-                    done = true;
-                    clearTimeout(timer);
-                    Swal.fire('เกิดข้อผิดพลาด', (error && error.message) ? error.message : String(error), 'error');
-                })
-                [functionName].apply(null, args || []);
-        }
+       const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyYvA3Pbi3jBecrFzsl3fBRZAE_76B__0cAoamZGO26KeVI6Kof06lPMEccVOossPa8/exec'; // เปลี่ยนเป็นลิงก์ /exec ของคุณ
+
+function gsRun(functionName, args, onSuccess, options) {
+    options = options || {};
+    const timeoutMs = options.timeoutMs || 20000;
+    let done = false;
+    const controller = new AbortController();
+
+    const timer = setTimeout(function () {
+        if (done) return;
+        done = true;
+        controller.abort();
+        Swal.fire('หมดเวลาเชื่อมต่อ', 'เซิร์ฟเวอร์ไม่ตอบสนองภายในเวลาที่กำหนด', 'error');
+    }, timeoutMs);
+
+    fetch(WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: functionName, params: args || [] }),
+        signal: controller.signal
+    })
+        .then(function (res) { return res.json(); })
+        .then(function (result) {
+            if (done) return;
+            done = true;
+            clearTimeout(timer);
+            onSuccess(result);
+        })
+        .catch(function (err) {
+            if (done) return;
+            done = true;
+            clearTimeout(timer);
+            if (err.name === 'AbortError') return;
+            Swal.fire('เกิดข้อผิดพลาด', err.message || String(err), 'error');
+        });
+}
  
         const THEMES = {
             graysunset: {
