@@ -785,6 +785,20 @@
         .notification-item .notification-time { font-size: .75rem; color: #748094; }
         .notification-badge { position: absolute; top: -7px; right: -7px; min-width: 18px; padding: 2px 5px; font-size: .65rem; }
 
+        /* สีประจำประเภทเอกสาร — ใช้ร่วมกันระหว่างสรุปและกราฟ */
+        #view-dashboard .border-left-primary .icon i { color: #3B82F6 !important; }
+        #view-dashboard .border-left-success .icon i { color: #10B981 !important; }
+        #view-dashboard .border-left-info .icon i { color: #8B5CF6 !important; }
+        #view-dashboard .border-left-secondary .icon i { color: #14B8A6 !important; }
+        #view-dashboard .border-left-danger .icon i { color: #F43F5E !important; }
+        #view-dashboard .border-left-warning .icon i { color: #F59E0B !important; }
+        #view-dashboard .border-left-primary { border-left: 4px solid #3B82F6 !important; }
+        #view-dashboard .border-left-success { border-left: 4px solid #10B981 !important; }
+        #view-dashboard .border-left-info { border-left: 4px solid #8B5CF6 !important; }
+        #view-dashboard .border-left-secondary { border-left: 4px solid #14B8A6 !important; }
+        #view-dashboard .border-left-danger { border-left: 4px solid #F43F5E !important; }
+        #view-dashboard .border-left-warning { border-left: 4px solid #F59E0B !important; }
+
         /* Higher contrast for the organisation / user block in the sidebar. */
         #sidebar .sidebar-header {
             background: linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.045));
@@ -1581,7 +1595,7 @@
             }
         }
  
-       const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwNcGKAjuI10DUlD3NEOQOMAER-ow6Y85SvZKqDM3P-qCzDj9YJcDW0_utQrlfjDxm9/exec'; // เปลี่ยนเป็นลิงก์ /exec ของคุณ
+       const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz-QHZQOy5IU-WWX7y4mXWULGE0_nSqRek9YHJa9pWzdbPfknX-BGLxD0YboXu2MPYT/exec'; // เปลี่ยนเป็นลิงก์ /exec ของคุณ
  
 function gsRun(functionName, args, onSuccess, options) {
     // เมื่อรันจาก Google Apps Script ให้เรียก server-side ของ Deployment เดียวกันโดยตรง
@@ -2904,16 +2918,10 @@ function gsRun(functionName, args, onSuccess, options) {
             if(barChartInstance) barChartInstance.destroy();
             if(pieChartInstance) pieChartInstance.destroy();
 
-            const style = getComputedStyle(document.documentElement);
-            const primary = style.getPropertyValue('--bs-primary').trim() || '#2563eb';
-            const secondary = style.getPropertyValue('--bs-secondary').trim() || '#7c3aed';
-            const success = style.getPropertyValue('--bs-success').trim() || '#16a34a';
-            const info = style.getPropertyValue('--bs-info').trim() || '#0891b2';
-            const warning = style.getPropertyValue('--bs-warning').trim() || '#d97706';
-            const danger = style.getPropertyValue('--bs-danger').trim() || '#dc2626';
-            const muted = '#64748b';
             const labels = ['รับ', 'ส่ง', 'เวียน', 'ภายใน', 'ด่วน', 'ทั่วไป'];
-            const colors = [primary, success, secondary, muted, danger, warning];
+            // ชุดสีโทนเย็นเพื่อให้อ่านข้อมูลได้สบายตาและแยกประเภทได้ชัดเจน
+            const colors = ['#3B82F6', '#10B981', '#8B5CF6', '#14B8A6', '#F43F5E', '#F59E0B'];
+            const highlightColors = ['#93C5FD', '#6EE7B7', '#C4B5FD', '#5EEAD4', '#FDA4AF', '#FCD34D'];
             const commonDataset = {
                 borderRadius: 7,
                 borderSkipped: false,
@@ -2921,17 +2929,23 @@ function gsRun(functionName, args, onSuccess, options) {
             };
 
             const ctxBar = document.getElementById('barChart').getContext('2d');
+            const barGradients = colors.map((color, index) => {
+                const gradient = ctxBar.createLinearGradient(0, 0, 0, 260);
+                gradient.addColorStop(0, highlightColors[index]);
+                gradient.addColorStop(1, color);
+                return gradient;
+            });
             barChartInstance = new Chart(ctxBar, {
                 type: 'bar',
                 data: {
                     labels: THAI_MONTHS_SHORT,
                     datasets: [
-                        { label: labels[0], data: monthlyByType['doc-in'], backgroundColor: colors[0], ...commonDataset },
-                        { label: labels[1], data: monthlyByType['doc-out'], backgroundColor: colors[1], ...commonDataset },
-                        { label: labels[2], data: monthlyByType['doc-circular'], backgroundColor: colors[2], ...commonDataset },
-                        { label: labels[3], data: monthlyByType['doc-internal'], backgroundColor: colors[3], ...commonDataset },
-                        { label: labels[4], data: monthlyByType['doc-urgent'], backgroundColor: colors[4], ...commonDataset },
-                        { label: labels[5], data: monthlyByType['doc-general'], backgroundColor: colors[5], ...commonDataset }
+                        { label: labels[0], data: monthlyByType['doc-in'], backgroundColor: barGradients[0], ...commonDataset },
+                        { label: labels[1], data: monthlyByType['doc-out'], backgroundColor: barGradients[1], ...commonDataset },
+                        { label: labels[2], data: monthlyByType['doc-circular'], backgroundColor: barGradients[2], ...commonDataset },
+                        { label: labels[3], data: monthlyByType['doc-internal'], backgroundColor: barGradients[3], ...commonDataset },
+                        { label: labels[4], data: monthlyByType['doc-urgent'], backgroundColor: barGradients[4], ...commonDataset },
+                        { label: labels[5], data: monthlyByType['doc-general'], backgroundColor: barGradients[5], ...commonDataset }
                     ]
                 },
                 options: {
@@ -2950,6 +2964,24 @@ function gsRun(functionName, args, onSuccess, options) {
             });
  
             const ctxPie = document.getElementById('pieChart').getContext('2d');
+            const totalDocuments = inC + outC + cirC + internalC + urgentC + genC;
+            const doughnutCenterText = {
+                id: 'doughnutCenterText',
+                afterDraw(chart) {
+                    const { ctx, chartArea } = chart;
+                    const x = (chartArea.left + chartArea.right) / 2;
+                    const y = (chartArea.top + chartArea.bottom) / 2;
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#1e3a5f';
+                    ctx.font = '700 24px Kanit, Sarabun, sans-serif';
+                    ctx.fillText(totalDocuments, x, y - 3);
+                    ctx.fillStyle = '#718096';
+                    ctx.font = '500 11px Sarabun, sans-serif';
+                    ctx.fillText('เอกสารทั้งหมด', x, y + 16);
+                    ctx.restore();
+                }
+            };
             pieChartInstance = new Chart(ctxPie, {
                 type: 'doughnut',
                 data: {
@@ -2971,7 +3003,8 @@ function gsRun(functionName, args, onSuccess, options) {
                         legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 14, font: { family: 'Sarabun', size: 12, weight: '600' } } },
                         tooltip: { backgroundColor: '#172033', padding: 12, cornerRadius: 9, titleFont: { family: 'Sarabun', weight: '700' }, bodyFont: { family: 'Sarabun' } }
                     }
-                }
+                },
+                plugins: [doughnutCenterText]
             });
         }
     </script>
