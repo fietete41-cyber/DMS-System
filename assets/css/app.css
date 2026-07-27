@@ -928,5 +928,16 @@
             #mobile-doc-pagination .pagination-summary { color: #64748b; font-size: .8rem; }
             #mobile-doc-pagination .pagination-actions { display: flex; gap: 7px; }
             #mobile-doc-pagination .btn { min-height: 38px; padding: .35rem .65rem; }
-        }
 
+            /* Keep notifications visible above the mobile application shell. */
+            #notification-menu.show {
+                position: fixed;
+                top: 68px;
+                right: 12px;
+                left: 12px;
+                width: auto;
+                max-height: min(60dvh, 460px);
+                z-index: 1100;
+                padding: 10px !important;
+            }
+        }
