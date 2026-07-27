@@ -110,7 +110,7 @@ const MOBILE_DOC_PAGE_SIZE = 20;
             }
         }
  
-       const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwNcGKAjuI10DUlD3NEOQOMAER-ow6Y85SvZKqDM3P-qCzDj9YJcDW0_utQrlfjDxm9/exec'; // เปลี่ยนเป็นลิงก์ /exec ของคุณ
+       const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzXBYpsuYTlG8od0nvxGwZPeHLgJpki2qgUNZz_-QtC3YD6DaF5nS-J-hicSYSPJqVv/exec'; // เปลี่ยนเป็นลิงก์ /exec ของคุณ
  
 function gsRun(functionName, args, onSuccess, options) {
     // เมื่อรันจาก Google Apps Script ให้เรียก server-side ของ Deployment เดียวกันโดยตรง
