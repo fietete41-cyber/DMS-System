@@ -818,6 +818,58 @@
             color: #fff !important;
             box-shadow: 0 4px 10px rgba(97, 12, 26, .35);
         }
+        /* Document-type palette: used consistently by the dashboard, menu and charts. */
+        :root {
+            --doc-in: #3B82F6;
+            --doc-out: #10B981;
+            --doc-circular: #8B5CF6;
+            --doc-internal: #14B8A6;
+            --doc-urgent: #F43F5E;
+            --doc-general: #F59E0B;
+        }
+        #sidebar li[data-document-type] > a i { color: var(--document-color); }
+        #sidebar li[data-document-type].active > a i,
+        #sidebar li[data-document-type] > a:hover i { color: #fff; }
+        [data-document-type="doc-in"] { --document-color: var(--doc-in); }
+        [data-document-type="doc-out"] { --document-color: var(--doc-out); }
+        [data-document-type="doc-circular"] { --document-color: var(--doc-circular); }
+        [data-document-type="doc-internal"] { --document-color: var(--doc-internal); }
+        [data-document-type="doc-urgent"] { --document-color: var(--doc-urgent); }
+        [data-document-type="doc-general"] { --document-color: var(--doc-general); }
+        .stat-card[data-document-type] { border-left: 4px solid var(--document-color) !important; }
+        .stat-card[data-document-type] .icon i,
+        .stat-card[data-document-type] .h3 { color: var(--document-color) !important; }
+        .dashboard-work-icon[data-document-type] { background: color-mix(in srgb, var(--document-color) 13%, white); color: var(--document-color); }
+        .dashboard-quick-actions .btn[data-document-type] { background: var(--document-color); border-color: var(--document-color); color: #fff; }
+
+        /* Phone-first refinements: keep controls touch-friendly and content easy to scan. */
+        @media (max-width: 576px) {
+            #sidebar { width: min(86vw, 320px); min-width: min(86vw, 320px); }
+            .top-navbar { position: sticky; min-height: 56px; padding: 8px 10px; }
+            .top-navbar .d-flex { gap: 5px !important; }
+            .top-navbar .btn { min-width: 40px; min-height: 40px; padding: .45rem .55rem; }
+            .main-container { padding: 12px; }
+            .main-container h3 { margin-bottom: 1rem !important; font-size: 1.16rem; }
+            .card, .stat-card { border-radius: 13px; }
+            .card-body { padding: 13px; }
+            .stat-card { min-height: 102px; padding: 13px; }
+            .stat-card .text-uppercase { font-size: .66rem; line-height: 1.25; }
+            .stat-card .h3 { font-size: 1.45rem; }
+            .stat-card .icon { font-size: 1.65rem; }
+            .dashboard-quick-actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 8px; }
+            .dashboard-quick-actions .btn { width: 100%; min-height: 44px; font-size: .84rem; padding: .45rem; }
+            .dashboard-work-list li { align-items: flex-start; gap: 8px; }
+            .dashboard-work-list .status-badge { display: none; }
+            .dashboard-work-list .btn { min-width: 36px; }
+            .table-responsive { margin: 0 -13px; padding: 0 13px; }
+            .table-responsive table { min-width: 720px; }
+            #barChart { min-height: 280px !important; }
+            #pieChart { min-height: 300px !important; }
+            .modal-dialog { margin: .35rem; }
+            .modal-content { border-radius: 14px; }
+            .modal-body { padding: 15px; }
+            .form-control, .form-select { min-height: 44px; }
+        }
     </style>
 </head>
 <body>
@@ -876,22 +928,22 @@
                     <li class="active" onclick="switchMenu('dashboard', this)">
                         <a href="#"><i class="fas fa-chart-line"></i> Dashboard</a>
                     </li>
-                    <li onclick="switchMenu('doc-in', this)">
+                    <li data-document-type="doc-in" onclick="switchMenu('doc-in', this)">
                         <a href="#"><i class="fas fa-inbox"></i> หนังสือรับ</a>
                     </li>
-                    <li onclick="switchMenu('doc-out', this)">
+                    <li data-document-type="doc-out" onclick="switchMenu('doc-out', this)">
                         <a href="#"><i class="fas fa-paper-plane"></i> หนังสือส่ง</a>
                     </li>
-                    <li onclick="switchMenu('doc-circular', this)">
+                    <li data-document-type="doc-circular" onclick="switchMenu('doc-circular', this)">
                         <a href="#"><i class="fas fa-sync-alt"></i> หนังสือเวียน</a>
                     </li>
-                    <li onclick="switchMenu('doc-internal', this)">
+                    <li data-document-type="doc-internal" onclick="switchMenu('doc-internal', this)">
                         <a href="#"><i class="fas fa-building"></i> หนังสือภายใน</a>
                     </li>
-                    <li onclick="switchMenu('doc-urgent', this)">
+                    <li data-document-type="doc-urgent" onclick="switchMenu('doc-urgent', this)">
                         <a href="#"><i class="fas fa-bolt"></i> หนังสือด่วน</a>
                     </li>
-                    <li onclick="switchMenu('doc-general', this)">
+                    <li data-document-type="doc-general" onclick="switchMenu('doc-general', this)">
                         <a href="#"><i class="fas fa-file-alt"></i> เอกสารทั่วไป</a>
                     </li>
                     <li onclick="switchMenu('search', this)">
@@ -989,7 +1041,7 @@
  
                         <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 g-lg-4">
                             <div class="col mb-4">
-                                <div class="stat-card border-left-primary h-100">
+                                <div class="stat-card border-left-primary h-100" data-document-type="doc-in">
                                     <div>
                                         <div class="text-muted small text-uppercase fw-bold">หนังสือรับ</div>
                                         <div class="h3 mb-0" id="stat-in">0</div>
@@ -998,7 +1050,7 @@
                                 </div>
                             </div>
                             <div class="col mb-4">
-                                <div class="stat-card border-left-success h-100">
+                                <div class="stat-card border-left-success h-100" data-document-type="doc-out">
                                     <div>
                                         <div class="text-muted small text-uppercase fw-bold">หนังสือส่ง</div>
                                         <div class="h3 mb-0" id="stat-out">0</div>
@@ -1007,7 +1059,7 @@
                                 </div>
                             </div>
                             <div class="col mb-4">
-                                <div class="stat-card border-left-info h-100">
+                                <div class="stat-card border-left-info h-100" data-document-type="doc-circular">
                                     <div>
                                         <div class="text-muted small text-uppercase fw-bold">หนังสือเวียน</div>
                                         <div class="h3 mb-0" id="stat-cir">0</div>
@@ -1016,7 +1068,7 @@
                                 </div>
                             </div>
                             <div class="col mb-4">
-                                <div class="stat-card border-left-secondary h-100">
+                                <div class="stat-card border-left-secondary h-100" data-document-type="doc-internal">
                                     <div>
                                         <div class="text-muted small text-uppercase fw-bold">หนังสือภายใน</div>
                                         <div class="h3 mb-0" id="stat-internal">0</div>
@@ -1025,7 +1077,7 @@
                                 </div>
                             </div>
                             <div class="col mb-4">
-                                <div class="stat-card border-left-danger h-100">
+                                <div class="stat-card border-left-danger h-100" data-document-type="doc-urgent">
                                     <div>
                                         <div class="text-muted small text-uppercase fw-bold">หนังสือด่วน</div>
                                         <div class="h3 mb-0" id="stat-urgent">0</div>
@@ -1034,7 +1086,7 @@
                                 </div>
                             </div>
                             <div class="col mb-4">
-                                <div class="stat-card border-left-warning h-100">
+                                <div class="stat-card border-left-warning h-100" data-document-type="doc-general">
                                     <div>
                                         <div class="text-muted small text-uppercase fw-bold">เอกสารทั่วไป</div>
                                         <div class="h3 mb-0" id="stat-gen">0</div>
@@ -1059,9 +1111,9 @@
                                     <small class="text-muted">เริ่มรายการใหม่หรือไปยังส่วนที่ต้องติดตามได้ทันที</small>
                                 </div>
                                 <div class="dashboard-quick-actions">
-                                    <button class="btn btn-primary" onclick="openDashboardSection('doc-in')"><i class="fas fa-inbox me-1"></i> หนังสือรับ</button>
-                                    <button class="btn btn-secondary" onclick="openDashboardSection('doc-out')"><i class="fas fa-paper-plane me-1"></i> หนังสือส่ง</button>
-                                    <button class="btn btn-outline-danger" onclick="openDashboardSection('doc-urgent')"><i class="fas fa-bolt me-1"></i> หนังสือด่วน</button>
+                                    <button class="btn btn-primary" data-document-type="doc-in" onclick="openDashboardSection('doc-in')"><i class="fas fa-inbox me-1"></i> หนังสือรับ</button>
+                                    <button class="btn btn-secondary" data-document-type="doc-out" onclick="openDashboardSection('doc-out')"><i class="fas fa-paper-plane me-1"></i> หนังสือส่ง</button>
+                                    <button class="btn btn-outline-danger" data-document-type="doc-urgent" onclick="openDashboardSection('doc-urgent')"><i class="fas fa-bolt me-1"></i> หนังสือด่วน</button>
                                     <button class="btn btn-outline-secondary" onclick="openDashboardSection('search')"><i class="fas fa-magnifying-glass me-1"></i> ค้นหาเอกสาร</button>
                                 </div>
                             </div>
@@ -2815,7 +2867,7 @@ function gsRun(functionName, args, onSuccess, options) {
                 const idArg = JSON.stringify(String(doc.id));
                 const actionLabel = currentUser && currentUser.role === 'admin' ? 'จัดการงาน' : 'เปิดเอกสาร';
                 return `<li>
-                    <span class="dashboard-work-icon"><i class="fas ${icon}"></i></span>
+                    <span class="dashboard-work-icon" data-document-type="${doc.type}"><i class="fas ${icon}"></i></span>
                     <div class="dashboard-work-text"><div class="dashboard-work-title" title="${safeTitle}">${safeTitle}</div><div class="dashboard-work-meta">${safeNo} · ${safeDate} · ${safeAssignee}${doc.dueDate ? ' · ครบกำหนด ' + safeDueDate : ''}</div></div>
                     <span class="status-badge ${getDashboardStatusClass(doc.status)}">${safeStatus}</span>
                     <button class="btn btn-sm btn-light" onclick='openDashboardDocument(${idArg})' title="${actionLabel}"><i class="fas ${currentUser && currentUser.role === 'admin' ? 'fa-pen-to-square' : 'fa-arrow-right'}"></i></button>
