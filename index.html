@@ -1584,6 +1584,18 @@
        const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz-QHZQOy5IU-WWX7y4mXWULGE0_nSqRek9YHJa9pWzdbPfknX-BGLxD0YboXu2MPYT/exec'; // เปลี่ยนเป็นลิงก์ /exec ของคุณ
  
 function gsRun(functionName, args, onSuccess, options) {
+    // เมื่อรันจาก Google Apps Script ให้เรียก server-side ของ Deployment เดียวกันโดยตรง
+    // เพื่อป้องกันข้อมูลถูกส่งไปยัง URL ของ Deployment เก่า
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+        const runner = google.script.run
+            .withSuccessHandler(onSuccess)
+            .withFailureHandler(function (err) {
+                Swal.fire('เกิดข้อผิดพลาด', (err && err.message) || String(err), 'error');
+            });
+        runner[functionName](...(args || []));
+        return;
+    }
+
     options = options || {};
     const timeoutMs = options.timeoutMs || 20000;
     let done = false;
