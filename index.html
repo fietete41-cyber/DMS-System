@@ -2,7 +2,12 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1e3d63">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.webmanifest">
     <title>ระบบจัดการเอกสาร (DMS)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -869,6 +874,26 @@
             .modal-content { border-radius: 14px; }
             .modal-body { padding: 15px; }
             .form-control, .form-select { min-height: 44px; }
+        }
+
+        /* Mobile application shell: the menu is a true off-canvas drawer, never a partial column. */
+        @media (max-width: 768px) {
+            body { overflow-x: hidden; }
+            #sidebar {
+                width: min(86vw, 340px) !important;
+                min-width: min(86vw, 340px) !important;
+                max-width: min(86vw, 340px) !important;
+                height: 100dvh;
+                margin-left: 0 !important;
+                transform: translateX(-105%);
+                transition: transform .28s cubic-bezier(.2,.8,.2,1);
+                will-change: transform;
+            }
+            #sidebar.active { margin-left: 0 !important; transform: translateX(0); }
+            #content, #content.active { width: 100%; margin-left: 0 !important; }
+            #sidebar-overlay { opacity: 0; transition: opacity .25s ease; }
+            #sidebar-overlay.show { display: block; opacity: 1; }
+            #sidebar ul li a { min-height: 48px; display: flex; align-items: center; }
         }
     </style>
 </head>
@@ -1837,7 +1862,9 @@ function gsRun(functionName, args, onSuccess, options) {
  
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('app-screen').style.display = 'block';
- 
+            // Always start with the drawer closed on a phone (including browser back/restore cases).
+            if (window.innerWidth <= 768) closeMobileSidebar();
+
             document.getElementById('user-display-name').innerText = currentUser.name;
             document.getElementById('user-display-role').innerText = currentUser.role.toUpperCase();
             document.getElementById('user-display-role').className = currentUser.role === 'admin' ? 'badge bg-danger mt-1' : 'badge bg-info mt-1';
