@@ -764,7 +764,8 @@
         .top-navbar .btn-danger { border: 1px solid rgba(255,255,255,.18); box-shadow: 0 3px 8px rgba(15,23,42,.18); }
 
         /* Give chart panels a calm, dedicated dashboard surface. */
-        #barChart, #pieChart { max-height: 330px; }
+        #barChart { display: block; height: 270px !important; max-height: none; }
+        #pieChart { display: block; height: 270px !important; max-height: none; }
         #barChartTitle, #pieChartTitle { letter-spacing: -.01em; }
 
         .dashboard-quick-actions { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -794,13 +795,13 @@
         #view-dashboard .border-left-primary .icon i { color: #3B82F6 !important; }
         #view-dashboard .border-left-success .icon i { color: #10B981 !important; }
         #view-dashboard .border-left-info .icon i { color: #8B5CF6 !important; }
-        #view-dashboard .border-left-secondary .icon i { color: #14B8A6 !important; }
+        #view-dashboard .border-left-secondary .icon i { color: #1CECFF !important; }
         #view-dashboard .border-left-danger .icon i { color: #F43F5E !important; }
         #view-dashboard .border-left-warning .icon i { color: #F59E0B !important; }
         #view-dashboard .border-left-primary { border-left: 4px solid #3B82F6 !important; }
         #view-dashboard .border-left-success { border-left: 4px solid #10B981 !important; }
         #view-dashboard .border-left-info { border-left: 4px solid #8B5CF6 !important; }
-        #view-dashboard .border-left-secondary { border-left: 4px solid #14B8A6 !important; }
+        #view-dashboard .border-left-secondary { border-left: 4px solid #1CECFF !important; }
         #view-dashboard .border-left-danger { border-left: 4px solid #F43F5E !important; }
         #view-dashboard .border-left-warning { border-left: 4px solid #F59E0B !important; }
 
@@ -828,7 +829,7 @@
             --doc-in: #3B82F6;
             --doc-out: #10B981;
             --doc-circular: #8B5CF6;
-            --doc-internal: #14B8A6;
+            --doc-internal: #1CECFF;
             --doc-urgent: #F43F5E;
             --doc-general: #F59E0B;
         }
@@ -868,8 +869,8 @@
             .dashboard-work-list .btn { min-width: 36px; }
             .table-responsive { margin: 0 -13px; padding: 0 13px; }
             .table-responsive table { min-width: 720px; }
-            #barChart { min-height: 280px !important; }
-            #pieChart { min-height: 300px !important; }
+            #barChart { height: 290px !important; min-height: 290px !important; }
+            #pieChart { height: 290px !important; min-height: 290px !important; }
             .modal-dialog { margin: .35rem; }
             .modal-content { border-radius: 14px; }
             .modal-body { padding: 15px; }
@@ -894,6 +895,46 @@
             #sidebar-overlay { opacity: 0; transition: opacity .25s ease; }
             #sidebar-overlay.show { display: block; opacity: 1; }
             #sidebar ul li a { min-height: 48px; display: flex; align-items: center; }
+
+            /* Document lists become complete, readable cards instead of a horizontally scrolling table. */
+            #view-doc-list .table-responsive { overflow: visible; margin: 0; padding: 0; }
+            #view-doc-list .table,
+            #view-doc-list .table tbody { display: block; width: 100%; min-width: 0 !important; }
+            #view-doc-list .table thead { display: none; }
+            #view-doc-list .table tbody { display: grid; gap: 12px; }
+            #view-doc-list .table tbody tr {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px 14px;
+                padding: 14px;
+                background: #fff;
+                border: 1px solid #e5edf6;
+                border-radius: 14px;
+                box-shadow: 0 5px 14px rgba(15, 23, 42, .05);
+            }
+            #view-doc-list .table tbody td {
+                display: flex;
+                flex-direction: column;
+                min-width: 0;
+                padding: 0;
+                border: 0;
+                font-size: .91rem;
+                overflow-wrap: anywhere;
+            }
+            #view-doc-list .table tbody td::before {
+                content: attr(data-label);
+                margin-bottom: 3px;
+                color: #64748b;
+                font-size: .72rem;
+                font-weight: 700;
+            }
+            #view-doc-list .table tbody td:nth-child(2),
+            #view-doc-list .table tbody td:nth-child(7) { grid-column: 1 / -1; }
+            #view-doc-list .table tbody td:nth-child(7) { flex-direction: row; flex-wrap: wrap; gap: 6px; }
+            #view-doc-list .table tbody td:nth-child(7)::before { width: 100%; }
+            #view-doc-list .table tbody tr.doc-empty { display: block; text-align: center; }
+            #view-doc-list .table tbody tr.doc-empty td { display: block; }
+            #view-doc-list .table tbody tr.doc-empty td::before { display: none; }
         }
     </style>
 </head>
@@ -1188,7 +1229,7 @@
                                 <div class="card shadow-sm">
                                     <div class="card-header bg-white" id="barChartTitle">สถิติเอกสารรายเดือน</div>
                                     <div class="card-body">
-                                        <canvas id="barChart" height="100"></canvas>
+                                        <canvas id="barChart" height="270" aria-label="กราฟสถิติเอกสารรายเดือน"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -1196,7 +1237,7 @@
                                 <div class="card shadow-sm">
                                     <div class="card-header bg-white" id="pieChartTitle">สัดส่วนประเภทเอกสาร</div>
                                     <div class="card-body">
-                                        <canvas id="pieChart" height="200"></canvas>
+                                        <canvas id="pieChart" height="270" aria-label="กราฟสัดส่วนประเภทเอกสาร"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -2283,7 +2324,7 @@ function gsRun(functionName, args, onSuccess, options) {
             const filteredDocs = appDocuments.filter(d => d.type === type);
             
             if(filteredDocs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">ไม่มีข้อมูลเอกสาร</td></tr>';
+                tbody.innerHTML = '<tr class="doc-empty"><td colspan="7" class="text-center text-muted py-4">ไม่มีข้อมูลเอกสาร</td></tr>';
                 return;
             }
  
@@ -2309,13 +2350,13 @@ function gsRun(functionName, args, onSuccess, options) {
                     : '-';
  
                 tr.innerHTML = `
-                    <td class="fw-bold">${doc.no}</td>
-                    <td>${doc.title}</td>
-                    <td>${doc.date}</td>
-                    <td>${doc.from}</td>
-                    <td>${deptCell}</td>
-                    <td><span class="status-badge ${badgeColor}">${doc.status}</span></td>
-                    <td>${actionBtns}</td>
+                    <td data-label="เลขที่เอกสาร" class="fw-bold">${doc.no}</td>
+                    <td data-label="เรื่อง">${doc.title}</td>
+                    <td data-label="วันที่">${doc.date}</td>
+                    <td data-label="จาก/ถึง">${doc.from}</td>
+                    <td data-label="ฝ่าย/งาน">${deptCell}</td>
+                    <td data-label="สถานะ"><span class="status-badge ${badgeColor}">${doc.status}</span></td>
+                    <td data-label="จัดการ">${actionBtns}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -2999,12 +3040,14 @@ function gsRun(functionName, args, onSuccess, options) {
 
             const labels = ['รับ', 'ส่ง', 'เวียน', 'ภายใน', 'ด่วน', 'ทั่วไป'];
             // ชุดสีโทนเย็นเพื่อให้อ่านข้อมูลได้สบายตาและแยกประเภทได้ชัดเจน
-            const colors = ['#3B82F6', '#10B981', '#8B5CF6', '#14B8A6', '#F43F5E', '#F59E0B'];
-            const highlightColors = ['#93C5FD', '#6EE7B7', '#C4B5FD', '#5EEAD4', '#FDA4AF', '#FCD34D'];
+            const colors = ['#3B82F6', '#10B981', '#8B5CF6', '#1CECFF', '#F43F5E', '#F59E0B'];
+            const highlightColors = ['#93C5FD', '#6EE7B7', '#C4B5FD', '#A5F3FC', '#FDA4AF', '#FCD34D'];
             const commonDataset = {
-                borderRadius: 7,
+                borderRadius: 10,
                 borderSkipped: false,
-                maxBarThickness: 38
+                maxBarThickness: 42,
+                barPercentage: 0.72,
+                categoryPercentage: 0.74
             };
 
             const ctxBar = document.getElementById('barChart').getContext('2d');
@@ -3030,10 +3073,12 @@ function gsRun(functionName, args, onSuccess, options) {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { top: 8, right: 6, left: 2, bottom: 0 } },
+                    animation: { duration: 700, easing: 'easeOutQuart' },
+                    interaction: { mode: 'index', intersect: false },
+                    layout: { padding: { top: 12, right: 10, left: 4, bottom: 2 } },
                     plugins: {
-                        legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 16, font: { family: 'Sarabun', size: 12, weight: '600' } } },
-                        tooltip: { backgroundColor: '#172033', padding: 12, cornerRadius: 9, titleFont: { family: 'Sarabun', weight: '700' }, bodyFont: { family: 'Sarabun' }, displayColors: true }
+                        legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 9, boxHeight: 9, padding: 14, font: { family: 'Sarabun', size: 12, weight: '600' } } },
+                        tooltip: { backgroundColor: '#172033', padding: 12, cornerRadius: 10, titleFont: { family: 'Sarabun', weight: '700' }, bodyFont: { family: 'Sarabun' }, displayColors: true, caretPadding: 8 }
                     },
                     scales: {
                         x: { stacked: true, grid: { display: false }, ticks: { color: '#64748b', font: { family: 'Sarabun', size: 12 } }, border: { display: false } },
