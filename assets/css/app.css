@@ -823,7 +823,7 @@
         :root {
             --doc-in: #3B82F6;
             --doc-out: #10B981;
-            --doc-all: #757575;
+            --doc-all: #b0bec5;
             --doc-circular: #8B5CF6;
             --doc-external: #8B5CF6;
             --doc-internal: #1CECFF;
@@ -894,7 +894,7 @@
             padding: 22px 28px;
             background: linear-gradient(105deg, #ffffff 0%, #f1f5f9 100%);
             border-left-width: 6px !important;
-            border-left-color: #757575 !important;
+            border-left-color: #b0bec5 !important;
         }
         #view-dashboard .dashboard-total-column {
             flex: 0 0 100% !important;
@@ -905,7 +905,7 @@
         }
         #view-dashboard .dashboard-total-card .icon i,
         #view-dashboard .dashboard-total-card .h3 {
-            color: #757575 !important;
+            color: #b0bec5 !important;
         }
         .stat-card[data-document-type] { border-left: 4px solid var(--document-color) !important; }
         .stat-card[data-document-type] .icon i,
