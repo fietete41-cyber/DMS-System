@@ -5,7 +5,9 @@ let appUsers = [];
         let knownUnreadNotificationIds = new Set();
         let appDepartments = {};
         let currentUser = null;
-        let currentDocType = 'doc-in'; 
+let currentDocType = 'doc-in'; 
+let mobileDocPage = 1;
+const MOBILE_DOC_PAGE_SIZE = 20;
         let barChartInstance, pieChartInstance;
         let docModal, userModal, importPreviewModal;
         let pendingImportUsers = [];
@@ -684,8 +686,9 @@ function gsRun(functionName, args, onSuccess, options) {
                 updateDashboard();
             } else if (menuId.startsWith('doc-')) {
                 document.getElementById('view-doc-list').classList.add('active');
-                currentDocType = menuId;
-                renderDocList(menuId);
+        currentDocType = menuId;
+        mobileDocPage = 1;
+        renderDocList(menuId);
             } else if (menuId === 'users') {
                 document.getElementById('view-users').classList.add('active');
                 renderUserList();
@@ -710,19 +713,30 @@ function gsRun(functionName, args, onSuccess, options) {
             return types[type] || 'เอกสาร';
         }
  
-        function renderDocList(type) {
-            document.getElementById('doc-page-title').innerText = getDocTypeName(type);
-            const tbody = document.getElementById('doc-table-body');
-            tbody.innerHTML = '';
- 
-            const filteredDocs = appDocuments.filter(d => d.type === type);
+function renderDocList(type) {
+    document.getElementById('doc-page-title').innerText = getDocTypeName(type);
+    const tbody = document.getElementById('doc-table-body');
+    const pagination = document.getElementById('mobile-doc-pagination');
+    tbody.innerHTML = '';
+
+    const filteredDocs = appDocuments.filter(d => d.type === type);
+    const isMobile = window.innerWidth <= 768;
+    
+    if(filteredDocs.length === 0) {
+        tbody.innerHTML = '<tr class="doc-empty"><td colspan="7" class="text-center text-muted py-4">ไม่มีข้อมูลเอกสาร</td></tr>';
+        if (pagination) pagination.innerHTML = '';
+        return;
+    }
+
+    const totalPages = Math.ceil(filteredDocs.length / MOBILE_DOC_PAGE_SIZE);
+    if (!isMobile) mobileDocPage = 1;
+    mobileDocPage = Math.max(1, Math.min(mobileDocPage, totalPages));
+    const startIndex = isMobile ? (mobileDocPage - 1) * MOBILE_DOC_PAGE_SIZE : 0;
+    const visibleDocs = isMobile
+        ? filteredDocs.slice(startIndex, startIndex + MOBILE_DOC_PAGE_SIZE)
+        : filteredDocs;
             
-            if(filteredDocs.length === 0) {
-                tbody.innerHTML = '<tr class="doc-empty"><td colspan="7" class="text-center text-muted py-4">ไม่มีข้อมูลเอกสาร</td></tr>';
-                return;
-            }
- 
-            filteredDocs.forEach(doc => {
+    visibleDocs.forEach(doc => {
                 const tr = document.createElement('tr');
                 let badgeColor = 'bg-secondary';
                 if(doc.status === 'ใหม่') badgeColor = 'bg-danger';
@@ -752,9 +766,28 @@ function gsRun(functionName, args, onSuccess, options) {
                     <td data-label="สถานะ"><span class="status-badge ${badgeColor}">${doc.status}</span></td>
                     <td data-label="จัดการ">${actionBtns}</td>
                 `;
-                tbody.appendChild(tr);
-            });
-        }
+        tbody.appendChild(tr);
+    });
+
+    if (!pagination) return;
+    if (!isMobile || totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+    }
+    const lastIndex = Math.min(startIndex + MOBILE_DOC_PAGE_SIZE, filteredDocs.length);
+    pagination.innerHTML = `
+        <span class="pagination-summary">แสดง ${startIndex + 1}–${lastIndex} จาก ${filteredDocs.length} รายการ</span>
+        <span class="pagination-actions">
+            <button class="btn btn-outline-secondary btn-sm" type="button" onclick="changeMobileDocPage(${mobileDocPage - 1})" ${mobileDocPage === 1 ? 'disabled' : ''}>ก่อนหน้า</button>
+            <button class="btn btn-primary btn-sm" type="button" onclick="changeMobileDocPage(${mobileDocPage + 1})" ${mobileDocPage === totalPages ? 'disabled' : ''}>ถัดไป</button>
+        </span>`;
+}
+
+function changeMobileDocPage(page) {
+    mobileDocPage = page;
+    renderDocList(currentDocType);
+    document.getElementById('view-doc-list').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
  
         function openDocModal() {
             document.getElementById('docId').value = '';
@@ -1525,3 +1558,4 @@ function gsRun(functionName, args, onSuccess, options) {
                 plugins: [doughnutCenterText]
             });
         }
+
