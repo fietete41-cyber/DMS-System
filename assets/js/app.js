@@ -1,3 +1,4 @@
+
 let appUsers = [];
         let appDocuments = [];
         let appNotifications = [];
@@ -1533,8 +1534,8 @@ function changeMobileDocPage(page) {
 
             const labels = ['รับ', 'ส่ง', 'ภายนอก', 'ภายใน', 'ประทับตรา', 'สั่งการ', 'ประชาสัมพันธ์', 'หลักฐานราชการ'];
             // ชุดสีโทนเย็นเพื่อให้อ่านข้อมูลได้สบายตาและแยกประเภทได้ชัดเจน
-            const colors = ['#3B82F6', '#10B981', '#8B5CF6', '#1CECFF', '#94A3B8', '#F43F5E', '#FF6F00', '#FDD835'];
-            const highlightColors = ['#93C5FD', '#6EE7B7', '#C4B5FD', '#A5F3FC', '#CBD5E1', '#FDA4AF', '#FFD180', '#FFF59D'];
+            const colors = ['#3B82F6', '#10B981', '#8B5CF6', '#1CECFF', '#795548', '#F43F5E', '#FF6F00', '#FDD835'];
+            const highlightColors = ['#93C5FD', '#6EE7B7', '#C4B5FD', '#A5F3FC', '#BCAAA4', '#FDA4AF', '#FFD180', '#FFF59D'];
             const commonDataset = {
                 borderRadius: 10,
                 borderSkipped: false,
