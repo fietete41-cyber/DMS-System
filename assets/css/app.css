@@ -814,45 +814,58 @@
         }
         #sidebar .sidebar-header h4 { font-weight: 700; }
         #sidebar .sidebar-header small { color: rgba(255,255,255,.88) !important; font-weight: 500; }
-     /* Admin = สีแดง */
-#sidebar .sidebar-header .badge.bg-danger {
-    background: #fb4a5d !important;
-    color: #fff !important;
-    box-shadow: 0 4px 10px rgba(97, 12, 26, .35);
-}
-
-/* User = สีฟ้า */
-#sidebar .sidebar-header .badge.bg-info {
-    background: #0dcaf0 !important;
-    color: #fff !important;
-    box-shadow: 0 4px 10px rgba(13, 202, 240, .35);
-}
+        #sidebar .sidebar-header .badge {
+            background: #fb4a5d !important;
+            color: #fff !important;
+            box-shadow: 0 4px 10px rgba(97, 12, 26, .35);
+        }
         /* Document-type palette: used consistently by the dashboard, menu and charts. */
         :root {
             --doc-in: #3B82F6;
             --doc-out: #10B981;
+            --doc-all: #E2E8F0;
             --doc-circular: #8B5CF6;
             --doc-external: #8B5CF6;
             --doc-internal: #1CECFF;
+            --doc-stamped: #94A3B8;
             --doc-urgent: #F43F5E;
             --doc-general: #F59E0B;
             --doc-order-group: #F43F5E;
             --doc-public-group: #F59E0B;
-            --doc-evidence-group: #64748B;
+            --doc-evidence-group: #3B82F6;
         }
         #sidebar li[data-document-type] > a i { color: var(--document-color); }
         #sidebar li[data-document-type].active > a i,
         #sidebar li[data-document-type] > a:hover i { color: #fff; }
         [data-document-type="doc-in"] { --document-color: var(--doc-in); }
         [data-document-type="doc-out"] { --document-color: var(--doc-out); }
+        [data-document-type="doc-all"] { --document-color: var(--doc-all); }
         [data-document-type="doc-circular"] { --document-color: var(--doc-circular); }
         [data-document-type="doc-external"] { --document-color: var(--doc-external); }
         [data-document-type="doc-internal"] { --document-color: var(--doc-internal); }
+        [data-document-type="doc-stamped"] { --document-color: var(--doc-stamped); }
         [data-document-type="doc-urgent"] { --document-color: var(--doc-urgent); }
         [data-document-type="doc-general"] { --document-color: var(--doc-general); }
+        [data-document-type="doc-command"], [data-document-type="doc-regulation"], [data-document-type="doc-rule"] { --document-color: var(--doc-order-group); }
+        [data-document-type="doc-announcement"], [data-document-type="doc-statement"], [data-document-type="doc-news"] { --document-color: var(--doc-public-group); }
+        [data-document-type="doc-certification"], [data-document-type="doc-meeting-report"], [data-document-type="doc-memo"], [data-document-type="doc-other"] { --document-color: var(--doc-evidence-group); }
         [data-document-type="doc-order-group"] { --document-color: var(--doc-order-group); }
         [data-document-type="doc-public-group"] { --document-color: var(--doc-public-group); }
         [data-document-type="doc-evidence-group"] { --document-color: var(--doc-evidence-group); }
+
+        /* ใช้สีประเภทเอกสารบนเมนูด้านข้างให้สอดคล้องกับการ์ด Dashboard */
+        #sidebar li[data-document-type] > a {
+            border-left: 4px solid transparent;
+            transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+        }
+        #sidebar li[data-document-type] > a > i:not(.menu-chevron) {
+            color: var(--document-color);
+        }
+        #sidebar li[data-document-type] > a:hover,
+        #sidebar li[data-document-type].active > a {
+            border-left-color: var(--document-color);
+            background: color-mix(in srgb, var(--document-color) 20%, transparent);
+        }
         .stat-card[data-document-type] { border-left: 4px solid var(--document-color) !important; }
         .stat-card[data-document-type] .icon i,
         .stat-card[data-document-type] .h3 { color: var(--document-color) !important; }
@@ -971,4 +984,3 @@
                 padding: 10px !important;
             }
         }
-
