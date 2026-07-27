@@ -1,0 +1,9 @@
+{
+  "name": "DMS System",
+  "short_name": "DMS",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#F4F7FB",
+  "theme_color": "#1E3D63",
+  "lang": "th"
+}
