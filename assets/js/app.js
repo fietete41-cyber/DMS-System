@@ -336,7 +336,9 @@ function gsRun(functionName, args, onSuccess, options) {
             window.addEventListener('resize', updateSidebarOverlay);
  
             gsRun('getSystemSettings', [], function (settings) {
-                if (settings && settings.logoUrl) applyLogo(settings.logoUrl);
+                // Apply the saved theme before login as well, not only after entering the app.
+                // This keeps the login background, login button, and application shell in sync.
+                applySystemSettings(settings);
             }, { timeoutMs: 15000 });
  
             const savedUser = loadSession();
@@ -1558,4 +1560,3 @@ function changeMobileDocPage(page) {
                 plugins: [doughnutCenterText]
             });
         }
-
