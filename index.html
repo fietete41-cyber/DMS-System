@@ -74,27 +74,40 @@
                     <li class="active" onclick="switchMenu('dashboard', this)">
                         <a href="#"><i class="fas fa-chart-line"></i> Dashboard</a>
                     </li>
+                    <li class="sidebar-section-label"><span>ทะเบียนหนังสือ</span></li>
                     <li data-document-type="doc-in" onclick="switchMenu('doc-in', this)">
                         <a href="#"><i class="fas fa-inbox"></i> หนังสือรับ</a>
                     </li>
                     <li data-document-type="doc-out" onclick="switchMenu('doc-out', this)">
                         <a href="#"><i class="fas fa-paper-plane"></i> หนังสือส่ง</a>
                     </li>
-                    <li data-document-type="doc-circular" onclick="switchMenu('doc-circular', this)">
-                        <a href="#"><i class="fas fa-sync-alt"></i> หนังสือเวียน</a>
-                    </li>
-                    <li data-document-type="doc-internal" onclick="switchMenu('doc-internal', this)">
-                        <a href="#"><i class="fas fa-building"></i> หนังสือภายใน</a>
-                    </li>
-                    <li data-document-type="doc-urgent" onclick="switchMenu('doc-urgent', this)">
-                        <a href="#"><i class="fas fa-bolt"></i> หนังสือด่วน</a>
-                    </li>
-                    <li data-document-type="doc-general" onclick="switchMenu('doc-general', this)">
-                        <a href="#"><i class="fas fa-file-alt"></i> เอกสารทั่วไป</a>
-                    </li>
                     <li onclick="switchMenu('search', this)">
                         <a href="#"><i class="fas fa-search"></i> ค้นหาเอกสาร</a>
                     </li>
+
+                    <li class="sidebar-section-label"><span>ประเภทหนังสือราชการ</span></li>
+                    <li data-document-type="doc-external" onclick="switchMenu('doc-external', this)"><a href="#"><i class="fas fa-envelope-open-text"></i> หนังสือภายนอก</a></li>
+                    <li data-document-type="doc-internal" onclick="switchMenu('doc-internal', this)"><a href="#"><i class="fas fa-building"></i> หนังสือภายใน</a></li>
+                    <li data-document-type="doc-stamped" onclick="switchMenu('doc-stamped', this)"><a href="#"><i class="fas fa-stamp"></i> หนังสือประทับตรา</a></li>
+                    <li class="sidebar-group"><a href="#official-order-menu" data-bs-toggle="collapse" role="button" aria-expanded="false"><i class="fas fa-gavel"></i> หนังสือสั่งการ <i class="fas fa-chevron-down menu-chevron"></i></a></li>
+                    <li><ul class="list-unstyled collapse sidebar-submenu" id="official-order-menu">
+                        <li data-document-type="doc-command" onclick="switchMenu('doc-command', this)"><a href="#"><i class="fas fa-angle-right"></i> คำสั่ง</a></li>
+                        <li data-document-type="doc-regulation" onclick="switchMenu('doc-regulation', this)"><a href="#"><i class="fas fa-angle-right"></i> ระเบียบ</a></li>
+                        <li data-document-type="doc-rule" onclick="switchMenu('doc-rule', this)"><a href="#"><i class="fas fa-angle-right"></i> ข้อบังคับ</a></li>
+                    </ul></li>
+                    <li class="sidebar-group"><a href="#official-public-menu" data-bs-toggle="collapse" role="button" aria-expanded="false"><i class="fas fa-bullhorn"></i> หนังสือประชาสัมพันธ์ <i class="fas fa-chevron-down menu-chevron"></i></a></li>
+                    <li><ul class="list-unstyled collapse sidebar-submenu" id="official-public-menu">
+                        <li data-document-type="doc-announcement" onclick="switchMenu('doc-announcement', this)"><a href="#"><i class="fas fa-angle-right"></i> ประกาศ</a></li>
+                        <li data-document-type="doc-statement" onclick="switchMenu('doc-statement', this)"><a href="#"><i class="fas fa-angle-right"></i> แถลงการณ์</a></li>
+                        <li data-document-type="doc-news" onclick="switchMenu('doc-news', this)"><a href="#"><i class="fas fa-angle-right"></i> ข่าว</a></li>
+                    </ul></li>
+                    <li class="sidebar-group"><a href="#official-evidence-menu" data-bs-toggle="collapse" role="button" aria-expanded="false"><i class="fas fa-folder-tree"></i> หนังสือที่เจ้าหน้าที่ทำขึ้นหรือรับไว้เป็นหลักฐานในราชการ <i class="fas fa-chevron-down menu-chevron"></i></a></li>
+                    <li><ul class="list-unstyled collapse sidebar-submenu" id="official-evidence-menu">
+                        <li data-document-type="doc-certification" onclick="switchMenu('doc-certification', this)"><a href="#"><i class="fas fa-angle-right"></i> หนังสือรับรอง</a></li>
+                        <li data-document-type="doc-meeting-report" onclick="switchMenu('doc-meeting-report', this)"><a href="#"><i class="fas fa-angle-right"></i> รายงานการประชุม</a></li>
+                        <li data-document-type="doc-memo" onclick="switchMenu('doc-memo', this)"><a href="#"><i class="fas fa-angle-right"></i> บันทึก</a></li>
+                        <li data-document-type="doc-other" onclick="switchMenu('doc-other', this)"><a href="#"><i class="fas fa-angle-right"></i> หนังสืออื่น</a></li>
+                    </ul></li>
                     <!-- เมนูเฉพาะ Admin -->
                     <li class="admin-only" onclick="switchMenu('users', this)">
                         <a href="#"><i class="fas fa-users"></i> ผู้ใช้งาน</a>
@@ -187,7 +200,7 @@
  
                         <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 g-lg-4">
                             <div class="col mb-4">
-                                <div class="stat-card border-left-primary h-100" data-document-type="doc-in">
+                                <div class="stat-card border-left-primary h-100" data-document-type="doc-in" onclick="openDashboardSection('doc-in')" role="button" tabindex="0">
                                     <div>
                                         <div class="text-muted small text-uppercase fw-bold">หนังสือรับ</div>
                                         <div class="h3 mb-0" id="stat-in">0</div>
@@ -196,7 +209,7 @@
                                 </div>
                             </div>
                             <div class="col mb-4">
-                                <div class="stat-card border-left-success h-100" data-document-type="doc-out">
+                                <div class="stat-card border-left-success h-100" data-document-type="doc-out" onclick="openDashboardSection('doc-out')" role="button" tabindex="0">
                                     <div>
                                         <div class="text-muted small text-uppercase fw-bold">หนังสือส่ง</div>
                                         <div class="h3 mb-0" id="stat-out">0</div>
@@ -205,16 +218,16 @@
                                 </div>
                             </div>
                             <div class="col mb-4">
-                                <div class="stat-card border-left-info h-100" data-document-type="doc-circular">
+                                <div class="stat-card border-left-info h-100" data-document-type="doc-external" onclick="openDashboardSection('doc-external')" role="button" tabindex="0">
                                     <div>
-                                        <div class="text-muted small text-uppercase fw-bold">หนังสือเวียน</div>
-                                        <div class="h3 mb-0" id="stat-cir">0</div>
+                                        <div class="text-muted small text-uppercase fw-bold">หนังสือภายนอก</div>
+                                        <div class="h3 mb-0" id="stat-external">0</div>
                                     </div>
-                                    <div class="icon"><i class="fas fa-sync-alt text-info"></i></div>
+                                    <div class="icon"><i class="fas fa-envelope-open-text text-info"></i></div>
                                 </div>
                             </div>
                             <div class="col mb-4">
-                                <div class="stat-card border-left-secondary h-100" data-document-type="doc-internal">
+                                <div class="stat-card border-left-secondary h-100" data-document-type="doc-internal" onclick="openDashboardSection('doc-internal')" role="button" tabindex="0">
                                     <div>
                                         <div class="text-muted small text-uppercase fw-bold">หนังสือภายใน</div>
                                         <div class="h3 mb-0" id="stat-internal">0</div>
@@ -223,21 +236,30 @@
                                 </div>
                             </div>
                             <div class="col mb-4">
-                                <div class="stat-card border-left-danger h-100" data-document-type="doc-urgent">
+                                <div class="stat-card border-left-danger h-100" data-document-type="doc-order-group">
                                     <div>
-                                        <div class="text-muted small text-uppercase fw-bold">หนังสือด่วน</div>
-                                        <div class="h3 mb-0" id="stat-urgent">0</div>
+                                        <div class="text-muted small text-uppercase fw-bold">หนังสือสั่งการ</div>
+                                        <div class="h3 mb-0" id="stat-order">0</div>
                                     </div>
-                                    <div class="icon"><i class="fas fa-bolt text-danger"></i></div>
+                                    <div class="icon"><i class="fas fa-gavel text-danger"></i></div>
                                 </div>
                             </div>
                             <div class="col mb-4">
-                                <div class="stat-card border-left-warning h-100" data-document-type="doc-general">
+                                <div class="stat-card border-left-warning h-100" data-document-type="doc-public-group">
                                     <div>
-                                        <div class="text-muted small text-uppercase fw-bold">เอกสารทั่วไป</div>
-                                        <div class="h3 mb-0" id="stat-gen">0</div>
+                                        <div class="text-muted small text-uppercase fw-bold">หนังสือประชาสัมพันธ์</div>
+                                        <div class="h3 mb-0" id="stat-public">0</div>
                                     </div>
-                                    <div class="icon"><i class="fas fa-file-alt text-warning"></i></div>
+                                    <div class="icon"><i class="fas fa-bullhorn text-warning"></i></div>
+                                </div>
+                            </div>
+                            <div class="col mb-4">
+                                <div class="stat-card border-left-primary h-100" data-document-type="doc-evidence-group">
+                                    <div>
+                                        <div class="text-muted small text-uppercase fw-bold">หนังสือหลักฐานราชการ</div>
+                                        <div class="h3 mb-0" id="stat-evidence">0</div>
+                                    </div>
+                                    <div class="icon"><i class="fas fa-folder-tree text-primary"></i></div>
                                 </div>
                             </div>
                             <div class="col mb-4">
@@ -259,7 +281,7 @@
                                 <div class="dashboard-quick-actions">
                                     <button class="btn btn-primary" data-document-type="doc-in" onclick="openDashboardSection('doc-in')"><i class="fas fa-inbox me-1"></i> หนังสือรับ</button>
                                     <button class="btn btn-secondary" data-document-type="doc-out" onclick="openDashboardSection('doc-out')"><i class="fas fa-paper-plane me-1"></i> หนังสือส่ง</button>
-                                    <button class="btn btn-outline-danger" data-document-type="doc-urgent" onclick="openDashboardSection('doc-urgent')"><i class="fas fa-bolt me-1"></i> หนังสือด่วน</button>
+                                    <button class="btn btn-outline-info" data-document-type="doc-external" onclick="openDashboardSection('doc-external')"><i class="fas fa-envelope-open-text me-1"></i> หนังสือภายนอก</button>
                                     <button class="btn btn-outline-secondary" onclick="openDashboardSection('search')"><i class="fas fa-magnifying-glass me-1"></i> ค้นหาเอกสาร</button>
                                 </div>
                             </div>
@@ -375,10 +397,19 @@
                                             <option value="all">ทั้งหมด</option>
                                             <option value="doc-in">หนังสือรับ</option>
                                             <option value="doc-out">หนังสือส่ง</option>
-                                            <option value="doc-circular">หนังสือเวียน</option>
+                                            <option value="doc-external">หนังสือภายนอก</option>
                                             <option value="doc-internal">หนังสือภายใน</option>
-                                            <option value="doc-urgent">หนังสือด่วน</option>
-                                            <option value="doc-general">เอกสารทั่วไป</option>
+                                            <option value="doc-stamped">หนังสือประทับตรา</option>
+                                            <option value="doc-command">คำสั่ง</option>
+                                            <option value="doc-regulation">ระเบียบ</option>
+                                            <option value="doc-rule">ข้อบังคับ</option>
+                                            <option value="doc-announcement">ประกาศ</option>
+                                            <option value="doc-statement">แถลงการณ์</option>
+                                            <option value="doc-news">ข่าว</option>
+                                            <option value="doc-certification">หนังสือรับรอง</option>
+                                            <option value="doc-meeting-report">รายงานการประชุม</option>
+                                            <option value="doc-memo">บันทึก</option>
+                                            <option value="doc-other">หนังสืออื่น</option>
                                         </select>
                                     </div>
                                     <div class="col-md-2">
