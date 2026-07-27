@@ -814,11 +814,19 @@
         }
         #sidebar .sidebar-header h4 { font-weight: 700; }
         #sidebar .sidebar-header small { color: rgba(255,255,255,.88) !important; font-weight: 500; }
-        #sidebar .sidebar-header .badge {
-            background: #fb4a5d !important;
-            color: #fff !important;
-            box-shadow: 0 4px 10px rgba(97, 12, 26, .35);
-        }
+       /* Admin = สีแดง */
+#sidebar .sidebar-header .badge.bg-danger {
+    background: #fb4a5d !important;
+    color: #fff !important;
+    box-shadow: 0 4px 10px rgba(97, 12, 26, .35);
+}
+
+/* User = สีฟ้า */
+#sidebar .sidebar-header .badge.bg-info {
+    background: #0dcaf0 !important;
+    color: #fff !important;
+    box-shadow: 0 4px 10px rgba(13, 202, 240, .35);
+}
         /* Document-type palette: used consistently by the dashboard, menu and charts. */
         :root {
             --doc-in: #3B82F6;
