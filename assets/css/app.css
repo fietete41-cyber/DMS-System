@@ -823,11 +823,11 @@
         :root {
             --doc-in: #3B82F6;
             --doc-out: #10B981;
-            --doc-all: #E2E8F0;
+            --doc-all: #757575;
             --doc-circular: #8B5CF6;
             --doc-external: #8B5CF6;
             --doc-internal: #1CECFF;
-            --doc-stamped: #94A3B8;
+            --doc-stamped: #795548;
             --doc-urgent: #F43F5E;
             --doc-general: #F59E0B;
             --doc-order-group: #F43F5E;
@@ -881,6 +881,31 @@
         #view-dashboard .stat-card[data-document-type="doc-evidence-group"] .icon i,
         #view-dashboard .stat-card[data-document-type="doc-evidence-group"] .h3 {
             color: #FDD835 !important;
+        }
+        #view-dashboard .stat-card[data-document-type="doc-stamped"] {
+            border-left-color: #795548 !important;
+        }
+        #view-dashboard .stat-card[data-document-type="doc-stamped"] .icon i,
+        #view-dashboard .stat-card[data-document-type="doc-stamped"] .h3 {
+            color: #795548 !important;
+        }
+        #view-dashboard .dashboard-total-card {
+            min-height: 118px;
+            padding: 22px 28px;
+            background: linear-gradient(105deg, #ffffff 0%, #f1f5f9 100%);
+            border-left-width: 6px !important;
+            border-left-color: #757575 !important;
+        }
+        #view-dashboard .dashboard-total-column {
+            flex: 0 0 100% !important;
+            width: 100% !important;
+        }
+        #view-dashboard .dashboard-total-card .icon {
+            font-size: 3.35rem;
+        }
+        #view-dashboard .dashboard-total-card .icon i,
+        #view-dashboard .dashboard-total-card .h3 {
+            color: #757575 !important;
         }
         .stat-card[data-document-type] { border-left: 4px solid var(--document-color) !important; }
         .stat-card[data-document-type] .icon i,
