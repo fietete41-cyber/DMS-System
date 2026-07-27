@@ -916,4 +916,17 @@
             #view-doc-list .table tbody tr.doc-empty { display: block; text-align: center; }
             #view-doc-list .table tbody tr.doc-empty td { display: block; }
             #view-doc-list .table tbody tr.doc-empty td::before { display: none; }
+            #mobile-doc-pagination {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                margin-top: 16px;
+                padding-top: 14px;
+                border-top: 1px solid #e5edf6;
+            }
+            #mobile-doc-pagination .pagination-summary { color: #64748b; font-size: .8rem; }
+            #mobile-doc-pagination .pagination-actions { display: flex; gap: 7px; }
+            #mobile-doc-pagination .btn { min-height: 38px; padding: .35rem .65rem; }
         }
+
