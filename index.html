@@ -77,6 +77,9 @@
                     <li onclick="switchMenu('search', this)">
                         <a href="#"><i class="fas fa-search"></i> ค้นหาเอกสาร</a>
                     </li>
+                    <li data-document-type="doc-all" onclick="switchMenu('doc-all', this)">
+                        <a href="#"><i class="fas fa-folder-open"></i> เอกสารทั้งหมด</a>
+                    </li>
                     <li class="sidebar-section-label"><span>ทะเบียนหนังสือ</span></li>
                     <li data-document-type="doc-in" onclick="switchMenu('doc-in', this)">
                         <a href="#"><i class="fas fa-inbox"></i> หนังสือรับ</a>
@@ -88,19 +91,19 @@
                     <li data-document-type="doc-external" onclick="switchMenu('doc-external', this)"><a href="#"><i class="fas fa-envelope-open-text"></i> หนังสือภายนอก</a></li>
                     <li data-document-type="doc-internal" onclick="switchMenu('doc-internal', this)"><a href="#"><i class="fas fa-building"></i> หนังสือภายใน</a></li>
                     <li data-document-type="doc-stamped" onclick="switchMenu('doc-stamped', this)"><a href="#"><i class="fas fa-stamp"></i> หนังสือประทับตรา</a></li>
-                    <li class="sidebar-group"><a href="#official-order-menu" data-bs-toggle="collapse" role="button" aria-expanded="false"><i class="fas fa-gavel"></i> หนังสือสั่งการ <i class="fas fa-chevron-down menu-chevron"></i></a></li>
+                    <li class="sidebar-group" data-document-type="doc-order-group"><a href="#official-order-menu" data-bs-toggle="collapse" role="button" aria-expanded="false"><i class="fas fa-gavel"></i> หนังสือสั่งการ <i class="fas fa-chevron-down menu-chevron"></i></a></li>
                     <li><ul class="list-unstyled collapse sidebar-submenu" id="official-order-menu">
                         <li data-document-type="doc-command" onclick="switchMenu('doc-command', this)"><a href="#"><i class="fas fa-angle-right"></i> คำสั่ง</a></li>
                         <li data-document-type="doc-regulation" onclick="switchMenu('doc-regulation', this)"><a href="#"><i class="fas fa-angle-right"></i> ระเบียบ</a></li>
                         <li data-document-type="doc-rule" onclick="switchMenu('doc-rule', this)"><a href="#"><i class="fas fa-angle-right"></i> ข้อบังคับ</a></li>
                     </ul></li>
-                    <li class="sidebar-group"><a href="#official-public-menu" data-bs-toggle="collapse" role="button" aria-expanded="false"><i class="fas fa-bullhorn"></i> หนังสือประชาสัมพันธ์ <i class="fas fa-chevron-down menu-chevron"></i></a></li>
+                    <li class="sidebar-group" data-document-type="doc-public-group"><a href="#official-public-menu" data-bs-toggle="collapse" role="button" aria-expanded="false"><i class="fas fa-bullhorn"></i> หนังสือประชาสัมพันธ์ <i class="fas fa-chevron-down menu-chevron"></i></a></li>
                     <li><ul class="list-unstyled collapse sidebar-submenu" id="official-public-menu">
                         <li data-document-type="doc-announcement" onclick="switchMenu('doc-announcement', this)"><a href="#"><i class="fas fa-angle-right"></i> ประกาศ</a></li>
                         <li data-document-type="doc-statement" onclick="switchMenu('doc-statement', this)"><a href="#"><i class="fas fa-angle-right"></i> แถลงการณ์</a></li>
                         <li data-document-type="doc-news" onclick="switchMenu('doc-news', this)"><a href="#"><i class="fas fa-angle-right"></i> ข่าว</a></li>
                     </ul></li>
-                    <li class="sidebar-group"><a href="#official-evidence-menu" data-bs-toggle="collapse" role="button" aria-expanded="false"><i class="fas fa-folder-tree"></i> หนังสือหลักฐานในราชการ <i class="fas fa-chevron-down menu-chevron"></i></a></li>
+                    <li class="sidebar-group" data-document-type="doc-evidence-group"><a href="#official-evidence-menu" data-bs-toggle="collapse" role="button" aria-expanded="false"><i class="fas fa-folder-tree"></i> หนังสือหลักฐานในราชการ <i class="fas fa-chevron-down menu-chevron"></i></a></li>
                     <li><ul class="list-unstyled collapse sidebar-submenu" id="official-evidence-menu">
                         <li data-document-type="doc-certification" onclick="switchMenu('doc-certification', this)"><a href="#"><i class="fas fa-angle-right"></i> หนังสือรับรอง</a></li>
                         <li data-document-type="doc-meeting-report" onclick="switchMenu('doc-meeting-report', this)"><a href="#"><i class="fas fa-angle-right"></i> รายงานการประชุม</a></li>
@@ -349,7 +352,7 @@
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h3 id="doc-page-title" class="fw-bold">รายการเอกสาร</h3>
                             <!-- ปุ่มเพิ่มเอกสาร เฉพาะ Admin -->
-                            <div class="admin-only">
+                            <div id="add-document-action" class="admin-only">
                                 <button class="btn btn-primary" onclick="openDocModal()">
                                     <i class="fas fa-plus"></i> เพิ่มเอกสารใหม่
                                 </button>
