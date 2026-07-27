@@ -109,7 +109,7 @@ const MOBILE_DOC_PAGE_SIZE = 20;
             }
         }
  
-       const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyM1omeVVqbHmDYQpRsu6DIcePr5_83kV9L0JmprvB4UQPwl4ARtPvh42RjHpRPOtp-/exec'; // เปลี่ยนเป็นลิงก์ /exec ของคุณ
+       const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwNcGKAjuI10DUlD3NEOQOMAER-ow6Y85SvZKqDM3P-qCzDj9YJcDW0_utQrlfjDxm9/exec'; // เปลี่ยนเป็นลิงก์ /exec ของคุณ
  
 function gsRun(functionName, args, onSuccess, options) {
     // เมื่อรันจาก Google Apps Script ให้เรียก server-side ของ Deployment เดียวกันโดยตรง
@@ -728,6 +728,7 @@ function getDocTypeName(type) {
     const types = {
         'doc-in': 'หนังสือรับ',
         'doc-out': 'หนังสือส่ง',
+        'doc-all': 'เอกสารทั้งหมด',
         'doc-external': 'หนังสือภายนอก',
         'doc-internal': 'หนังสือภายใน',
         'doc-stamped': 'หนังสือประทับตรา',
@@ -749,6 +750,7 @@ function getDocTypeName(type) {
 }
 
 function getDocumentsByType(type) {
+    if (type === 'doc-all') return appDocuments;
     // Keep legacy records discoverable without changing their stored type automatically.
     const legacyOtherTypes = ['doc-other', 'doc-general', 'doc-circular', 'doc-urgent'];
     return appDocuments.filter(doc => type === 'doc-other'
@@ -758,6 +760,10 @@ function getDocumentsByType(type) {
 
 function renderDocList(type) {
     document.getElementById('doc-page-title').innerText = getDocTypeName(type);
+    const addDocumentAction = document.getElementById('add-document-action');
+    if (addDocumentAction) {
+        addDocumentAction.style.display = (currentUser && currentUser.role === 'admin' && type !== 'doc-all') ? 'block' : 'none';
+    }
     const tbody = document.getElementById('doc-table-body');
     const pagination = document.getElementById('mobile-doc-pagination');
     tbody.innerHTML = '';
@@ -833,6 +839,10 @@ function changeMobileDocPage(page) {
 }
  
         function openDocModal() {
+            if (currentDocType === 'doc-all') {
+                Swal.fire('เลือกประเภทเอกสาร', 'กรุณาเลือกประเภทเอกสารจากเมนูด้านซ้ายก่อนเพิ่มรายการใหม่', 'info');
+                return;
+            }
             document.getElementById('docId').value = '';
             document.getElementById('docNo').value = '';
             document.getElementById('docTitle').value = '';
