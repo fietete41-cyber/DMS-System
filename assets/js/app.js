@@ -1470,6 +1470,7 @@ function changeMobileDocPage(page) {
             const outCount = filteredDocs.filter(d => d.type === 'doc-out').length;
             const externalCount = filteredDocs.filter(d => d.type === 'doc-external').length;
             const internalCount = filteredDocs.filter(d => d.type === 'doc-internal').length;
+            const stampedCount = filteredDocs.filter(d => d.type === 'doc-stamped').length;
             const orderCount = filteredDocs.filter(d => ['doc-command', 'doc-regulation', 'doc-rule'].includes(d.type)).length;
             const publicCount = filteredDocs.filter(d => ['doc-announcement', 'doc-statement', 'doc-news'].includes(d.type)).length;
             const evidenceCount = filteredDocs.filter(d => ['doc-certification', 'doc-meeting-report', 'doc-memo', 'doc-other', 'doc-general', 'doc-circular', 'doc-urgent'].includes(d.type)).length;
@@ -1478,6 +1479,7 @@ function changeMobileDocPage(page) {
             document.getElementById('stat-out').innerText = outCount;
             document.getElementById('stat-external').innerText = externalCount;
             document.getElementById('stat-internal').innerText = internalCount;
+            document.getElementById('stat-stamped').innerText = stampedCount;
             document.getElementById('stat-order').innerText = orderCount;
             document.getElementById('stat-public').innerText = publicCount;
             document.getElementById('stat-evidence').innerText = evidenceCount;
@@ -1498,6 +1500,7 @@ function changeMobileDocPage(page) {
                 'doc-out': Array(12).fill(0),
                 'doc-external': Array(12).fill(0),
                 'doc-internal': Array(12).fill(0),
+                'doc-stamped': Array(12).fill(0),
                 'doc-order-group': Array(12).fill(0),
                 'doc-public-group': Array(12).fill(0),
                 'doc-evidence-group': Array(12).fill(0)
@@ -1521,17 +1524,17 @@ function changeMobileDocPage(page) {
             document.getElementById('barChartTitle').innerText = 'สถิติเอกสารรายเดือน (' + yearLabel + deptLabel + ')';
             document.getElementById('pieChartTitle').innerText = 'สัดส่วนประเภทเอกสาร (' + yearLabel + monthLabel + deptLabel + ')';
  
-            renderCharts(monthlyByType, inCount, outCount, externalCount, internalCount, orderCount, publicCount, evidenceCount);
+            renderCharts(monthlyByType, inCount, outCount, externalCount, internalCount, stampedCount, orderCount, publicCount, evidenceCount);
         }
 
-        function renderCharts(monthlyByType, inC, outC, externalC, internalC, orderC, publicC, evidenceC) {
+        function renderCharts(monthlyByType, inC, outC, externalC, internalC, stampedC, orderC, publicC, evidenceC) {
             if(barChartInstance) barChartInstance.destroy();
             if(pieChartInstance) pieChartInstance.destroy();
 
-            const labels = ['รับ', 'ส่ง', 'ภายนอก', 'ภายใน', 'สั่งการ', 'ประชาสัมพันธ์', 'หลักฐานราชการ'];
+            const labels = ['รับ', 'ส่ง', 'ภายนอก', 'ภายใน', 'ประทับตรา', 'สั่งการ', 'ประชาสัมพันธ์', 'หลักฐานราชการ'];
             // ชุดสีโทนเย็นเพื่อให้อ่านข้อมูลได้สบายตาและแยกประเภทได้ชัดเจน
-            const colors = ['#3B82F6', '#10B981', '#8B5CF6', '#1CECFF', '#F43F5E', '#F59E0B', '#64748B'];
-            const highlightColors = ['#93C5FD', '#6EE7B7', '#C4B5FD', '#A5F3FC', '#FDA4AF', '#FCD34D', '#CBD5E1'];
+            const colors = ['#3B82F6', '#10B981', '#8B5CF6', '#1CECFF', '#94A3B8', '#F43F5E', '#FF6F00', '#FDD835'];
+            const highlightColors = ['#93C5FD', '#6EE7B7', '#C4B5FD', '#A5F3FC', '#CBD5E1', '#FDA4AF', '#FFD180', '#FFF59D'];
             const commonDataset = {
                 borderRadius: 10,
                 borderSkipped: false,
@@ -1556,9 +1559,10 @@ function changeMobileDocPage(page) {
                         { label: labels[1], data: monthlyByType['doc-out'], backgroundColor: barGradients[1], ...commonDataset },
                         { label: labels[2], data: monthlyByType['doc-external'], backgroundColor: barGradients[2], ...commonDataset },
                         { label: labels[3], data: monthlyByType['doc-internal'], backgroundColor: barGradients[3], ...commonDataset },
-                        { label: labels[4], data: monthlyByType['doc-order-group'], backgroundColor: barGradients[4], ...commonDataset },
-                        { label: labels[5], data: monthlyByType['doc-public-group'], backgroundColor: barGradients[5], ...commonDataset },
-                        { label: labels[6], data: monthlyByType['doc-evidence-group'], backgroundColor: barGradients[6], ...commonDataset }
+                        { label: labels[4], data: monthlyByType['doc-stamped'], backgroundColor: barGradients[4], ...commonDataset },
+                        { label: labels[5], data: monthlyByType['doc-order-group'], backgroundColor: barGradients[5], ...commonDataset },
+                        { label: labels[6], data: monthlyByType['doc-public-group'], backgroundColor: barGradients[6], ...commonDataset },
+                        { label: labels[7], data: monthlyByType['doc-evidence-group'], backgroundColor: barGradients[7], ...commonDataset }
                     ]
                 },
                 options: {
@@ -1579,7 +1583,7 @@ function changeMobileDocPage(page) {
             });
  
             const ctxPie = document.getElementById('pieChart').getContext('2d');
-            const totalDocuments = inC + outC + externalC + internalC + orderC + publicC + evidenceC;
+            const totalDocuments = inC + outC + externalC + internalC + stampedC + orderC + publicC + evidenceC;
             const doughnutCenterText = {
                 id: 'doughnutCenterText',
                 afterDraw(chart) {
@@ -1602,7 +1606,7 @@ function changeMobileDocPage(page) {
                 data: {
                     labels,
                     datasets: [{
-                        data: [inC, outC, externalC, internalC, orderC, publicC, evidenceC],
+                        data: [inC, outC, externalC, internalC, stampedC, orderC, publicC, evidenceC],
                         backgroundColor: colors,
                         borderColor: '#ffffff',
                         borderWidth: 4,
