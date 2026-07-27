@@ -334,6 +334,9 @@ function gsRun(functionName, args, onSuccess, options) {
             });
  
             window.addEventListener('resize', updateSidebarOverlay);
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('#notification-dropdown')) closeNotificationPanel();
+            });
  
             gsRun('getSystemSettings', [], function (settings) {
                 // Apply the saved theme before login as well, not only after entering the app.
@@ -510,9 +513,27 @@ function gsRun(functionName, args, onSuccess, options) {
             }).join('');
         }
 
+        function toggleNotificationPanel(event) {
+            if (event) event.stopPropagation();
+            const menu = document.getElementById('notification-menu');
+            const button = document.getElementById('notification-toggle');
+            if (!menu || !button) return;
+            const isOpen = menu.classList.toggle('show');
+            button.setAttribute('aria-expanded', String(isOpen));
+            if (isOpen) loadNotifications();
+        }
+
+        function closeNotificationPanel() {
+            const menu = document.getElementById('notification-menu');
+            const button = document.getElementById('notification-toggle');
+            if (menu) menu.classList.remove('show');
+            if (button) button.setAttribute('aria-expanded', 'false');
+        }
+
         function openNotification(notificationId) {
             const notification = appNotifications.find(item => String(item.id) === String(notificationId));
             if (!notification) return;
+            closeNotificationPanel();
             if (!notification.isRead && currentUser) {
                 gsRun('markNotificationRead', [notification.id, currentUser.username], function() {
                     notification.isRead = true;
