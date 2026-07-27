@@ -831,8 +831,8 @@
             --doc-urgent: #F43F5E;
             --doc-general: #F59E0B;
             --doc-order-group: #F43F5E;
-            --doc-public-group: #F59E0B;
-            --doc-evidence-group: #3B82F6;
+            --doc-public-group: #FF6F00;
+            --doc-evidence-group: #FDD835;
         }
         #sidebar li[data-document-type] > a i { color: var(--document-color); }
         #sidebar li[data-document-type].active > a i,
@@ -865,6 +865,22 @@
         #sidebar li[data-document-type].active > a {
             border-left-color: var(--document-color);
             background: color-mix(in srgb, var(--document-color) 20%, transparent);
+        }
+
+        /* สีเฉพาะของการ์ด Dashboard: ทับสี Bootstrap เดิมที่ใช้ !important */
+        #view-dashboard .stat-card[data-document-type="doc-public-group"] {
+            border-left-color: #FF6F00 !important;
+        }
+        #view-dashboard .stat-card[data-document-type="doc-public-group"] .icon i,
+        #view-dashboard .stat-card[data-document-type="doc-public-group"] .h3 {
+            color: #FF6F00 !important;
+        }
+        #view-dashboard .stat-card[data-document-type="doc-evidence-group"] {
+            border-left-color: #FDD835 !important;
+        }
+        #view-dashboard .stat-card[data-document-type="doc-evidence-group"] .icon i,
+        #view-dashboard .stat-card[data-document-type="doc-evidence-group"] .h3 {
+            color: #FDD835 !important;
         }
         .stat-card[data-document-type] { border-left: 4px solid var(--document-color) !important; }
         .stat-card[data-document-type] .icon i,
