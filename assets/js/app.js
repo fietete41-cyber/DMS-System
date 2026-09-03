@@ -10,7 +10,7 @@ let currentDocType = 'doc-in';
 let mobileDocPage = 1;
 const MOBILE_DOC_PAGE_SIZE = 20;
         let barChartInstance, pieChartInstance;
-        let docModal, userModal, importPreviewModal;
+        let docModal, userModal, importPreviewModal, userStatusModal;
         let pendingImportUsers = [];
         let currentThemeKey = 'graysunset';
         const DEFAULT_LOGO_URL = 'https://i.postimg.cc/FR3ZBhVM/sanea-khxng-s-n-ange-n-s-khaw-th-nsm-y-mode-r-n-thangkar-th-rk-c-cdhmay-xeksar-A4-(11).png';
@@ -297,7 +297,10 @@ function gsRun(functionName, args, onSuccess, options) {
         function enterApp(user, isRestoring) {
             currentUser = user;
             saveSession(user);
- 
+
+            // เริ่มต้นจากสถานะสะอาดเสมอ กันหน้าจอ/ข้อมูลของผู้ใช้คนก่อนค้างข้ามบทบาท
+            resetAppUI();
+
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('app-screen').style.display = 'block';
             // Always start with the drawer closed on a phone (including browser back/restore cases).
@@ -320,6 +323,7 @@ function gsRun(functionName, args, onSuccess, options) {
             docModal = new bootstrap.Modal(document.getElementById('docModal'));
             userModal = new bootstrap.Modal(document.getElementById('userModal'));
             importPreviewModal = new bootstrap.Modal(document.getElementById('importPreviewModal'));
+            userStatusModal = new bootstrap.Modal(document.getElementById('userStatusModal'));
  
             currentThemeKey = 'graysunset';
             applyTheme('graysunset');
@@ -664,6 +668,57 @@ function gsRun(functionName, args, onSuccess, options) {
             }
         }
  
+        // คืนค่าหน้าจอแอปทั้งหมดให้กลับสู่สถานะเริ่มต้น
+        // ใช้ทั้งตอน "ออกจากระบบ" และตอน "เข้าสู่ระบบใหม่" เพื่อไม่ให้หน้าจอ/ฟังก์ชัน
+        // ของผู้ใช้คนก่อน (โดยเฉพาะผู้ดูแลระบบ) ค้างมาให้ผู้ใช้คนถัดไปเห็น
+        function resetAppUI() {
+            // กลับไปที่หน้า Dashboard เสมอ
+            document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+            const dashboardView = document.getElementById('view-dashboard');
+            if (dashboardView) dashboardView.classList.add('active');
+
+            // รีเซ็ตเมนูด้านซ้ายให้ Dashboard เป็นรายการที่เลือกอยู่
+            document.querySelectorAll('#sidebar ul li').forEach(li => li.classList.remove('active'));
+            const dashboardMenu = Array.from(document.querySelectorAll('#sidebar li'))
+                .find(li => li.getAttribute('onclick') === "switchMenu('dashboard', this)");
+            if (dashboardMenu) dashboardMenu.classList.add('active');
+
+            // ยุบเมนูย่อยที่ถูกกางค้างไว้
+            document.querySelectorAll('#sidebar .sidebar-submenu.show').forEach(el => el.classList.remove('show'));
+            document.querySelectorAll('#sidebar [data-bs-toggle="collapse"]').forEach(el => {
+                el.classList.add('collapsed');
+                el.setAttribute('aria-expanded', 'false');
+            });
+
+            // ซ่อนทุกส่วนที่เป็นของผู้ดูแลระบบ (กลับไปใช้ค่าเริ่มต้นของ CSS = ซ่อน)
+            document.querySelectorAll('.admin-only').forEach(el => { el.style.display = ''; });
+
+            // ปิด Modal ที่อาจเปิดค้างไว้
+            [docModal, userModal, importPreviewModal, userStatusModal].forEach(m => { if (m) m.hide(); });
+
+            // ล้างข้อมูลในหน่วยความจำของผู้ใช้คนก่อน
+            appDocuments = [];
+            appUsers = [];
+            appNotifications = [];
+            appDepartments = {};
+            pendingImportUsers = [];
+            currentDocType = 'doc-in';
+            mobileDocPage = 1;
+
+            // ล้างการแจ้งเตือนบนหน้าจอ
+            knownUnreadNotificationIds = new Set();
+            renderNotifications();
+            closeNotificationPanel();
+
+            // ล้างเนื้อหาตาราง/ผลลัพธ์ที่ค้างอยู่
+            const userTableBody = document.getElementById('user-table-body');
+            if (userTableBody) userTableBody.innerHTML = '';
+            const docTableBody = document.getElementById('doc-table-body');
+            if (docTableBody) docTableBody.innerHTML = '';
+            const searchResults = document.getElementById('search-results');
+            if (searchResults) searchResults.innerHTML = '';
+        }
+
         function handleLogout() {
             Swal.fire({
                 title: 'ยืนยันการออกจากระบบ?', icon: 'warning', showCancelButton: true,
@@ -673,9 +728,9 @@ function gsRun(functionName, args, onSuccess, options) {
                     currentUser = null;
                     clearSession();
                     stopAutoRefresh();
+                    resetAppUI();
                     document.getElementById('app-screen').style.display = 'none';
                     document.getElementById('login-screen').style.display = 'flex';
-                    
                 }
             });
         }
@@ -700,6 +755,10 @@ function gsRun(functionName, args, onSuccess, options) {
         }
  
         function switchMenu(menuId, el) {
+            // ผู้ใช้ทั่วไปไม่มีสิทธิ์เข้าถึงเมนูของผู้ดูแลระบบ (กันชั้นที่สอง)
+            if ((menuId === 'users' || menuId === 'settings') && (!currentUser || currentUser.role !== 'admin')) {
+                return;
+            }
             document.querySelectorAll('#sidebar ul li').forEach(li => li.classList.remove('active'));
             if(el) el.classList.add('active');
  
@@ -801,8 +860,14 @@ function renderDocList(type) {
                         <button class="btn btn-sm btn-warning text-dark me-1 mb-1" title="แก้ไข" onclick="editDoc('${doc.id}')"><i class="fas fa-edit"></i></button>
                         <button class="btn btn-sm btn-danger mb-1" title="ลบ" onclick="deleteDoc('${doc.id}')"><i class="fas fa-trash"></i></button>
                     `;
+                } else if (currentUser) {
+                    actionBtns += `<button class="btn btn-sm btn-primary text-white mb-1" title="อัปเดตสถานะการดำเนินการ" onclick="openUserStatusModal('${doc.id}')"><i class="fas fa-list-check"></i> สถานะ</button>`;
                 }
- 
+
+                const userStatusCell = doc.userStatus
+                    ? `<div class="mt-1"><span class="badge ${getUserStatusBadgeClass(doc.userStatus)}"><i class="fas fa-user-check me-1"></i>${escapeDashboardText(doc.userStatus)}</span>${doc.userStatusReason ? `<div class="small text-muted mt-1">${escapeDashboardText(doc.userStatusReason)}</div>` : ''}</div>`
+                    : '';
+
                 const deptCell = doc.department
                     ? `<span class="badge bg-secondary d-block mb-1">${doc.department}</span>${doc.subDepartment ? `<span class="badge bg-light text-dark border">${doc.subDepartment}</span>` : ''}`
                     : '-';
@@ -813,7 +878,7 @@ function renderDocList(type) {
                     <td data-label="วันที่">${doc.date}</td>
                     <td data-label="จาก/ถึง">${doc.from}</td>
                     <td data-label="ฝ่าย/งาน">${deptCell}</td>
-                    <td data-label="สถานะ"><span class="status-badge ${badgeColor}">${doc.status}</span></td>
+                    <td data-label="สถานะ"><span class="status-badge ${badgeColor}">${doc.status}</span>${userStatusCell}</td>
                     <td data-label="จัดการ">${actionBtns}</td>
                 `;
         tbody.appendChild(tr);
@@ -838,6 +903,69 @@ function changeMobileDocPage(page) {
     renderDocList(currentDocType);
     document.getElementById('view-doc-list').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+        // ===== สถานะการดำเนินการฝั่งผู้ใช้ทั่วไป =====
+        // ผู้ใช้กดยืนยันว่าได้เห็นเอกสารแล้ว พร้อมระบุว่ากำลังอยู่ในขั้นตอนใด
+        // ระบบจะบันทึกลงชีต Documents และแจ้งเตือนกลับไปยังผู้ดูแลระบบ/ผู้สร้างเอกสาร
+        const USER_DOC_STATUSES = ['รับทราบ', 'กำลังดำเนินการ', 'ดำเนินการเสร็จสิ้นแล้ว', 'ไม่สามารถดำเนินการได้'];
+        let userStatusDocId = null;
+
+        function getUserStatusBadgeClass(s) {
+            if (s === 'ดำเนินการเสร็จสิ้นแล้ว') return 'bg-success';
+            if (s === 'กำลังดำเนินการ') return 'bg-primary';
+            if (s === 'ไม่สามารถดำเนินการได้') return 'bg-danger';
+            if (s === 'รับทราบ') return 'bg-info text-dark';
+            return 'bg-secondary';
+        }
+
+        function openUserStatusModal(id) {
+            const doc = appDocuments.find(d => d.id == id);
+            if (!doc) return;
+            userStatusDocId = id;
+            document.getElementById('userStatusDocInfo').innerText = (doc.no ? doc.no + ' — ' : '') + (doc.title || '');
+            document.getElementById('userStatusValue').value = USER_DOC_STATUSES.includes(doc.userStatus) ? doc.userStatus : 'รับทราบ';
+            document.getElementById('userStatusReason').value = doc.userStatusReason || '';
+            onUserStatusValueChange();
+            userStatusModal.show();
+        }
+
+        function onUserStatusValueChange() {
+            const val = document.getElementById('userStatusValue').value;
+            const label = document.getElementById('userStatusReasonLabel');
+            if (val === 'ไม่สามารถดำเนินการได้') {
+                label.innerHTML = 'เหตุผลที่ไม่สามารถดำเนินการได้ <span class="text-danger">*</span>';
+            } else {
+                label.innerText = 'หมายเหตุ (ถ้ามี)';
+            }
+        }
+
+        function submitUserStatus(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            if (!userStatusDocId || !currentUser) return;
+            const status = document.getElementById('userStatusValue').value;
+            const reason = document.getElementById('userStatusReason').value.trim();
+            if (status === 'ไม่สามารถดำเนินการได้' && !reason) {
+                return Swal.fire('แจ้งเตือน', 'กรุณาระบุเหตุผลที่ไม่สามารถดำเนินการได้', 'warning');
+            }
+
+            Swal.fire({ title: 'กำลังส่งสถานะ...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+            gsRun('updateUserDocStatus', [userStatusDocId, status, reason, currentUser.username], function (res) {
+                if (res && res.status === 'success') {
+                    const doc = appDocuments.find(d => d.id == userStatusDocId);
+                    if (doc) {
+                        doc.userStatus = res.userStatus;
+                        doc.userStatusReason = res.userStatusReason;
+                        doc.userStatusBy = res.userStatusBy;
+                        doc.userStatusAt = res.userStatusAt;
+                    }
+                    userStatusModal.hide();
+                    renderDocList(currentDocType);
+                    Swal.fire('ส่งแล้ว', 'ระบบบันทึกสถานะและแจ้งผู้ดูแลระบบเรียบร้อยแล้ว', 'success');
+                } else {
+                    Swal.fire('ข้อผิดพลาด', (res && res.message) || 'ไม่สามารถบันทึกสถานะได้', 'error');
+                }
+            }, { timeoutMs: 20000 });
+        }
  
         function openDocModal() {
             if (currentDocType === 'doc-all') {

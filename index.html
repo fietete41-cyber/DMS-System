@@ -723,6 +723,45 @@
     </div>
  
  
+    <!-- User Status Modal (ผู้ใช้ทั่วไปยืนยันว่าเห็นเอกสารแล้ว + แจ้งขั้นตอนการดำเนินการ) -->
+    <div class="modal fade" id="userStatusModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title"><i class="fas fa-list-check me-1"></i> อัปเดตสถานะการดำเนินการ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="userStatusForm">
+                        <p class="text-muted small mb-1">เอกสาร</p>
+                        <p class="fw-bold" id="userStatusDocInfo">-</p>
+                        <div class="mb-3">
+                            <label class="form-label">สถานะการดำเนินการ</label>
+                            <select class="form-select" id="userStatusValue" onchange="onUserStatusValueChange()">
+                                <option value="รับทราบ">รับทราบ</option>
+                                <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+                                <option value="ดำเนินการเสร็จสิ้นแล้ว">ดำเนินการเสร็จสิ้นแล้ว</option>
+                                <option value="ไม่สามารถดำเนินการได้">ไม่สามารถดำเนินการได้</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" id="userStatusReasonLabel">หมายเหตุ (ถ้ามี)</label>
+                            <textarea class="form-control" id="userStatusReason" rows="3" placeholder="ระบุรายละเอียด / เหตุผล..."></textarea>
+                        </div>
+                        <div class="alert alert-info small mb-0">
+                            <i class="fas fa-circle-info me-1"></i> เมื่อกดยืนยัน ระบบจะบันทึกว่าคุณได้เห็นเอกสารนี้แล้ว และแจ้งสถานะกลับไปยังผู้ดูแลระบบ
+                        </div>
+                        <div class="modal-footer px-0 pb-0 mt-3">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                            <button type="button" class="btn btn-primary" onclick="submitUserStatus(event)"><i class="fas fa-paper-plane me-1"></i> ยืนยันและส่ง</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <!-- ต้องมีบรรทัดนี้เพื่อให้ Modal ทำงานได้ -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
