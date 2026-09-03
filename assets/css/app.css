@@ -780,6 +780,7 @@
         .dashboard-summary .summary-number { font-family: 'Kanit', 'Sarabun', sans-serif; font-size: 1.7rem; font-weight: 700; line-height: 1; }
         .workflow-panel { background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), .07), rgba(var(--bs-secondary-rgb), .05)); border: 1px solid rgba(var(--bs-primary-rgb), .16); border-radius: 14px; padding: 16px; }
         .workflow-panel .workflow-title { color: var(--bs-primary); font-weight: 700; }
+        #docUserStatusBox.is-hidden { display: none !important; }
         .notification-menu { width: min(380px, calc(100vw - 28px)); max-height: 60vh; overflow-y: auto; right: 0; left: auto; }
         .notification-item { white-space: normal; border-radius: 8px; padding: 10px; height: auto; }
         .notification-item .d-flex { align-items: flex-start; min-width: 0; }

@@ -986,6 +986,7 @@ function changeMobileDocPage(page) {
             document.getElementById('docSubDepartmentOther').value = '';
             document.getElementById('docSubDepartmentOtherWrap').style.display = 'none';
             document.getElementById('docFile').value = '';
+            renderDocUserStatusBox(null);
             document.getElementById('docModalLabel').innerText = 'เพิ่ม ' + getDocTypeName(currentDocType);
             docModal.show();
         }
@@ -1020,9 +1021,47 @@ function changeMobileDocPage(page) {
                     otherInput.value = '';
                 }
  
+                renderDocUserStatusBox(doc);
                 document.getElementById('docModalLabel').innerText = 'แก้ไข ' + getDocTypeName(doc.type);
                 docModal.show();
             }
+        }
+
+        // แสดงกล่องสรุปสถานะที่ผู้ใช้ทั่วไปแจ้งกลับมา (อ่านอย่างเดียว) ในฟอร์มแก้ไขเอกสาร
+        function renderDocUserStatusBox(doc) {
+            const box = document.getElementById('docUserStatusBox');
+            if (!box) return;
+
+            if (!doc || !doc.userStatus) {
+                box.classList.add('is-hidden');
+                return;
+            }
+
+            document.getElementById('docUserStatusValue').innerText = doc.userStatus;
+
+            const reasonRow = document.getElementById('docUserStatusReasonRow');
+            if (doc.userStatusReason) {
+                document.getElementById('docUserStatusReason').innerText = doc.userStatusReason;
+                reasonRow.style.display = 'block';
+            } else {
+                reasonRow.style.display = 'none';
+            }
+
+            let at = '';
+            if (doc.userStatusAt) {
+                const d = new Date(doc.userStatusAt);
+                at = isNaN(d.getTime()) ? String(doc.userStatusAt) : d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
+            }
+            document.getElementById('docUserStatusMeta').innerText =
+                [doc.userStatusBy ? 'โดย ' + doc.userStatusBy : '', at ? 'เมื่อ ' + at + ' น.' : ''].filter(Boolean).join(' · ');
+
+            box.classList.remove('alert-info', 'alert-warning', 'alert-success', 'alert-danger');
+            box.classList.add(
+                doc.userStatus === 'ไม่สามารถดำเนินการได้' ? 'alert-danger' :
+                doc.userStatus === 'ดำเนินการเสร็จสิ้นแล้ว' ? 'alert-success' :
+                doc.userStatus === 'กำลังดำเนินการ' ? 'alert-warning' : 'alert-info'
+            );
+            box.classList.remove('is-hidden');
         }
  
         function getBase64(file) {
