@@ -780,10 +780,13 @@
         .dashboard-summary .summary-number { font-family: 'Kanit', 'Sarabun', sans-serif; font-size: 1.7rem; font-weight: 700; line-height: 1; }
         .workflow-panel { background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), .07), rgba(var(--bs-secondary-rgb), .05)); border: 1px solid rgba(var(--bs-primary-rgb), .16); border-radius: 14px; padding: 16px; }
         .workflow-panel .workflow-title { color: var(--bs-primary); font-weight: 700; }
-        .notification-menu { width: min(360px, calc(100vw - 28px)); max-height: 420px; overflow-y: auto; }
-        .notification-item { white-space: normal; border-radius: 8px; padding: 10px; }
+        .notification-menu { width: min(380px, calc(100vw - 28px)); max-height: 60vh; overflow-y: auto; right: 0; left: auto; }
+        .notification-item { white-space: normal; border-radius: 8px; padding: 10px; height: auto; }
+        .notification-item .d-flex { align-items: flex-start; min-width: 0; }
+        .notification-item .notification-body { flex: 1 1 auto; min-width: 0; }
+        .notification-item .notification-text { white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.5; }
         .notification-item.unread { background: rgba(var(--bs-primary-rgb), .09); }
-        .notification-item .notification-time { font-size: .75rem; color: #748094; }
+        .notification-item .notification-time { font-size: .75rem; color: #748094; margin-top: 2px; }
         .notification-badge { position: absolute; top: -7px; right: -7px; min-width: 18px; padding: 2px 5px; font-size: .65rem; }
 
         /* สีประจำประเภทเอกสาร — ใช้ร่วมกันระหว่างสรุปและกราฟ */

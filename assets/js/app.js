@@ -513,7 +513,7 @@ function gsRun(functionName, args, onSuccess, options) {
                 const time = item.createdAt ? new Date(item.createdAt).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }) : '';
                 const idArg = JSON.stringify(String(item.id));
                 return `<button class="dropdown-item notification-item ${item.isRead ? '' : 'unread'}" onclick='openNotification(${idArg})'>
-                    <div class="d-flex gap-2"><i class="fas fa-bell text-primary mt-1"></i><div><div>${escapeDashboardText(item.message || 'มีการแจ้งเตือนใหม่')}</div><div class="notification-time">${escapeDashboardText(time)}</div></div></div>
+                    <div class="d-flex gap-2"><i class="fas fa-bell text-primary mt-1"></i><div class="notification-body"><div class="notification-text">${escapeDashboardText(item.message || 'มีการแจ้งเตือนใหม่')}</div><div class="notification-time">${escapeDashboardText(time)}</div></div></div>
                 </button>`;
             }).join('');
         }
