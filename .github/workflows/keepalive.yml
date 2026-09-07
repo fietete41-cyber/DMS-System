@@ -1,0 +1,20 @@
+# ยิง REST ไป Supabase วันละครั้ง กันโปรเจกต์ free ถูก pause (ไม่มีกิจกรรม 7 วัน)
+# anon key เป็น public key อยู่แล้ว (ดู assets/js/supabase-config.js) ใส่ตรง ๆ ได้
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    - cron: "17 2 * * *"      # ทุกวัน 02:17 UTC (09:17 น. เวลาไทย)
+  workflow_dispatch:            # กดรันเองได้จากแท็บ Actions
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST
+        run: |
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            "https://tfcinnyixmbdcnzflsye.supabase.co/rest/v1/settings?id=eq.system&select=id" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmY2lubnlpeG1iZGNuemZsc3llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3NjYzNTksImV4cCI6MjEwNDM0MjM1OX0.xh8f7BufQnih0UGC_X8mX_0A55K5FUYoil6gQwcWpGs")
+          echo "HTTP $code"
+          test "$code" = "200"
