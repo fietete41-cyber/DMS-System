@@ -14,4 +14,4 @@ window.AUTH_EMAIL_DOMAIN = "dms.local";
 /* URL ของ Google Apps Script (Deploy เดิม) — คงไว้ใช้เฉพาะ "อัปโหลดไฟล์ขึ้น Drive"
    ต้องเพิ่มฟังก์ชัน uploadFile ใน GS DMS แล้ว Deploy เวอร์ชันใหม่ (ดู SUPABASE-SETUP.md)
    ยังไม่ต้องแก้ตอนนี้ก็ได้ — จำเป็นเฉพาะตอนเพิ่มเอกสารที่มีไฟล์แนบ */
-window.FILE_API_URL = "https://script.google.com/macros/s/PASTE_DEPLOY_ID/exec";
+window.FILE_API_URL = "https://script.google.com/macros/s/AKfycbzXBYpsuYTlG8od0nvxGwZPeHLgJpki2qgUNZz_-QtC3YD6DaF5nS-J-hicSYSPJqVv/exec";
