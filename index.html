@@ -191,7 +191,10 @@
                                             <option value="all">ทุกงาน</option>
                                         </select>
                                     </div>
-                                    <div class="col-12 text-md-end">
+                                    <div class="col-12 text-md-end d-flex flex-wrap gap-2 justify-content-md-end">
+                                        <button id="dms-load-all-btn" class="btn btn-outline-primary" onclick="if(window.DMS_loadAllDocuments)DMS_loadAllDocuments()" title="ปกติระบบโหลดเฉพาะเอกสารปีนี้และปีที่แล้วเพื่อความเร็ว กดปุ่มนี้เพื่อดึงเอกสารทุกปี">
+                                            <i class="fas fa-clock-rotate-left"></i> โหลดเอกสารทั้งหมด
+                                        </button>
                                         <button class="btn btn-outline-secondary" onclick="resetDashboardFilter()">
                                             <i class="fas fa-rotate-left"></i> ล้างตัวกรอง
                                         </button>

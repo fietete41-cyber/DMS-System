@@ -31,6 +31,24 @@
   const DEFAULT_DEPARTMENTS_FALLBACK = (typeof DEFAULT_DEPARTMENTS !== 'undefined' ? DEFAULT_DEPARTMENTS : {});
   const FALLBACK_LOGO = (typeof DEFAULT_LOGO_URL !== 'undefined' ? DEFAULT_LOGO_URL : '');
 
+  // -------------------------------------------------------------------------
+  // ประหยัด egress: ปกติโหลดเฉพาะเอกสารช่วงล่าสุด (ปีนี้ + ปีที่แล้ว หรือที่เพิ่ง
+  // สร้างใน 6 เดือน) เอกสารเก่ากว่านั้นดึงเมื่อกดปุ่ม "โหลดเอกสารทั้งหมด"
+  // ปรับปีเริ่มต้นได้ผ่าน window.DMS_DOC_SINCE_YEAR
+  // -------------------------------------------------------------------------
+  let loadAllMode = false;
+  function docWindow() {
+    if (loadAllMode) return null;
+    const now = new Date();
+    const sinceYear = window.DMS_DOC_SINCE_YEAR || (now.getFullYear() - 1);
+    const createdCutoff = new Date(now.getTime() - 183 * 24 * 3600 * 1000).toISOString();
+    return `doc_date.gte.${sinceYear}-01-01,created_at.gte.${createdCutoff}`;
+  }
+  function applyDocWindow(q) {
+    const w = docWindow();
+    return w ? q.or(w) : q;
+  }
+
   // ---------------------------------------------------------------------------
   // แปลงแถว DB (snake_case) <-> object ที่ app.js ใช้ (camelCase)
   // ---------------------------------------------------------------------------
@@ -152,7 +170,7 @@
 
     async getInitialData() {
       const [docsRes, usersRes, departments] = await Promise.all([
-        sb.from('documents').select('*').order('created_at', { ascending: false }),
+        applyDocWindow(sb.from('documents').select('*').order('created_at', { ascending: false })),
         sb.from('users').select('*').order('username'),
         getDepartments()
       ]);
@@ -166,7 +184,9 @@
     },
 
     async getDocuments() {
-      const { data, error } = await sb.from('documents').select('*').order('created_at', { ascending: false });
+      const { data, error } = await applyDocWindow(
+        sb.from('documents').select('*').order('created_at', { ascending: false })
+      );
       if (error) throw error;
       return (data || []).map(rowToDoc);
     },
@@ -351,5 +371,29 @@
     } catch (e) { console.error('[DMS] restore session error', e); }
   })();
 
-  console.info('[DMS] Supabase data layer พร้อมใช้งาน');
+  // ---------------------------------------------------------------------------
+  // โหลดเอกสารทั้งหมด (รวมปีเก่า) — เรียกจากปุ่มบน Dashboard หรือ console
+  // หลังเรียกครั้งนี้ การรีเฟรชอัตโนมัติจะโหลดทั้งหมดไปจนกว่าจะรีโหลดหน้า
+  // ---------------------------------------------------------------------------
+  window.DMS_loadAllDocuments = async function () {
+    loadAllMode = true;
+    const btn = document.getElementById('dms-load-all-btn');
+    if (btn) { btn.disabled = true; btn.dataset.orig = btn.innerHTML; btn.innerHTML = 'กำลังโหลด...'; }
+    try {
+      const { data, error } = await sb.from('documents').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      if (typeof appDocuments !== 'undefined') appDocuments = (data || []).map(rowToDoc);
+      if (typeof populateYearOptions === 'function') populateYearOptions();
+      if (typeof updateDashboard === 'function') updateDashboard();
+      if (typeof renderDocList === 'function' && typeof currentDocType !== 'undefined') renderDocList(currentDocType);
+      if (window.Swal) Swal.fire({ title: 'โหลดเอกสารทั้งหมดแล้ว', text: 'รวม ' + (data || []).length + ' รายการ', icon: 'success', timer: 1400, showConfirmButton: false });
+      if (btn) btn.innerHTML = '<i class="fas fa-check"></i> โหลดครบแล้ว';
+    } catch (e) {
+      if (window.Swal) Swal.fire('เกิดข้อผิดพลาด', (e && e.message) || String(e), 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = btn.dataset.orig || 'โหลดเอกสารทั้งหมด'; }
+      loadAllMode = false;
+    }
+  };
+
+  console.info('[DMS] Supabase data layer พร้อมใช้งาน (โหลดเฉพาะเอกสารช่วงล่าสุด — กด "โหลดเอกสารทั้งหมด" เพื่อดูปีเก่า)');
 })();

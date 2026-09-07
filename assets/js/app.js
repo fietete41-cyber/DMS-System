@@ -16,8 +16,8 @@ const MOBILE_DOC_PAGE_SIZE = 20;
         const DEFAULT_LOGO_URL = 'https://i.postimg.cc/FR3ZBhVM/sanea-khxng-s-n-ange-n-s-khaw-th-nsm-y-mode-r-n-thangkar-th-rk-c-cdhmay-xeksar-A4-(11).png';
         let appSettings = { orgName: '', theme: 'graysunset', logoUrl: DEFAULT_LOGO_URL };
         let autoRefreshTimer = null;
-        const AUTO_REFRESH_MS = 5 * 60 * 1000; // รีเฟรชข้อมูลอัตโนมัติทุก 5 นาที
-        const NOTIFICATION_REFRESH_MS = 30 * 1000;
+        const AUTO_REFRESH_MS = 30 * 60 * 1000; // รีเฟรชข้อมูลอัตโนมัติทุก 30 นาที (ประหยัด egress)
+        const NOTIFICATION_REFRESH_MS = 120 * 1000; // ตรวจการแจ้งเตือนทุก 2 นาที
  
         // โครงสร้างฝ่าย/งานสำรอง (กรณีเซิร์ฟเวอร์ยังไม่ส่งค่ามา) - ใช้ตอนหน้าเว็บเพิ่งโหลด
         const DEFAULT_DEPARTMENTS = {
@@ -456,10 +456,11 @@ function gsRun(functionName, args, onSuccess, options) {
         function startAutoRefresh() {
             stopAutoRefresh();
             autoRefreshTimer = setInterval(function () {
-                if (currentUser) refreshData(false);
+                // ไม่ดึงข้อมูลถ้าผู้ใช้ไม่ได้เปิดดูแท็บอยู่ (ประหยัด egress)
+                if (currentUser && !document.hidden) refreshData(false);
             }, AUTO_REFRESH_MS);
             notificationTimer = setInterval(function () {
-                if (currentUser) loadNotifications();
+                if (currentUser && !document.hidden) loadNotifications();
             }, NOTIFICATION_REFRESH_MS);
         }
  
