@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DMS – ย้ายข้อมูลจาก Google Sheets ไป Supabase</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/js/supabase-config.js"></script>
+<style>
+  body{background:#f5f8fc;font-family:system-ui,'Sarabun',sans-serif;padding:24px}
+  .box{max-width:760px;margin:0 auto}
+  #log{background:#0b1020;color:#d7e3ff;font:13px/1.6 ui-monospace,monospace;padding:14px;border-radius:10px;height:340px;overflow:auto;white-space:pre-wrap}
+  .ok{color:#5ff2a0}.err{color:#ff9a9a}.warn{color:#ffd479}
+</style>
+</head>
+<body>
+<div class="box">
+  <h4 class="fw-bold mb-1">ย้ายข้อมูล DMS → Supabase</h4>
+  <p class="text-muted small">รันครั้งเดียว หลังจากตั้งค่า <code>supabase-config.js</code>, รัน <code>schema.sql</code>,
+    สร้างบัญชีแอดมินคนแรก และ Deploy Edge Function <code>admin</code> แล้ว (ดู SUPABASE-SETUP.md)</p>
+
+  <div class="card mb-3"><div class="card-body">
+    <div class="row g-2">
+      <div class="col-sm-6"><label class="form-label small">แอดมิน – ชื่อผู้ใช้</label>
+        <input id="u" class="form-control" placeholder="admin"></div>
+      <div class="col-sm-6"><label class="form-label small">แอดมิน – รหัสผ่าน</label>
+        <input id="p" type="password" class="form-control"></div>
+      <div class="col-12"><label class="form-label small">URL ของ Google Apps Script เดิม (ลงท้าย /exec)</label>
+        <input id="gs" class="form-control" placeholder="https://script.google.com/macros/s/AKfy.../exec"></div>
+    </div>
+    <div class="form-check mt-3">
+      <input class="form-check-input" type="checkbox" id="doUsers" checked>
+      <label class="form-check-label" for="doUsers">ย้ายผู้ใช้ (สร้างบัญชีล็อกอิน + โปรไฟล์ ผ่าน Edge Function)</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="doDocs" checked>
+      <label class="form-check-label" for="doDocs">ย้ายเอกสารทั้งหมด</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="doSettings" checked>
+      <label class="form-check-label" for="doSettings">ย้ายการตั้งค่าระบบ + โครงสร้างฝ่าย/งาน</label>
+    </div>
+    <button id="go" class="btn btn-primary mt-3">เริ่มย้ายข้อมูล</button>
+  </div></div>
+
+  <div id="log"></div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const logEl = $('#log');
+function log(msg, cls){ const s=document.createElement('span'); if(cls)s.className=cls; s.textContent=msg+'\n'; logEl.appendChild(s); logEl.scrollTop=logEl.scrollHeight; }
+
+const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+const EMAIL_DOMAIN = window.AUTH_EMAIL_DOMAIN || 'dms.local';
+
+async function callGS(url, action, params){
+  const r = await fetch(url, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({ action, params: params||[] }) });
+  return r.json();
+}
+const chunk = (a,n)=>{const o=[];for(let i=0;i<a.length;i+=n)o.push(a.slice(i,i+n));return o;};
+
+$('#go').addEventListener('click', async () => {
+  $('#go').disabled = true;
+  try {
+    const gsUrl = $('#gs').value.trim();
+    if(!gsUrl) throw new Error('กรุณาใส่ URL ของ Apps Script เดิม');
+
+    log('• เข้าสู่ระบบ Supabase ในฐานะแอดมิน...');
+    const { data: auth, error: aerr } = await sb.auth.signInWithPassword({
+      email: $('#u').value.trim().toLowerCase()+'@'+EMAIL_DOMAIN, password: $('#p').value });
+    if(aerr) throw new Error('ล็อกอินไม่สำเร็จ: '+aerr.message);
+    log('  ✓ ล็อกอินแล้ว ('+auth.user.email+')', 'ok');
+
+    log('• ดึงข้อมูลจาก Google Sheets...');
+    const initial = await callGS(gsUrl, 'getInitialData');
+    const settings = await callGS(gsUrl, 'getSystemSettings');
+    const users = initial.users || [], docs = initial.docs || [], departments = initial.departments || {};
+    log(`  ✓ ได้ผู้ใช้ ${users.length} · เอกสาร ${docs.length} · ฝ่าย ${Object.keys(departments).length}`, 'ok');
+
+    // ---- ผู้ใช้ ----
+    if($('#doUsers').checked && users.length){
+      log('• ย้ายผู้ใช้ผ่าน Edge Function...');
+      const payload = users.map(u => ({ username:u.username, password:String(u.password||''), name:u.name, role:u.role }));
+      const { data, error } = await sb.functions.invoke('admin', { body:{ action:'importUsers', users: payload } });
+      if(error) throw new Error('importUsers: '+error.message);
+      log(`  ✓ สร้างผู้ใช้ใหม่ ${data.inserted} คน (ที่มีอยู่แล้วถูกข้าม)`, 'ok');
+      const noPass = users.filter(u=>!u.password).length;
+      if(noPass) log(`  ! ${noPass} คนไม่มีรหัสผ่านในชีต จึงข้าม — ต้องเพิ่มเองใน Supabase`, 'warn');
+    }
+
+    // ---- เอกสาร ----
+    if($('#doDocs').checked && docs.length){
+      log('• ย้ายเอกสาร (เรียงเก่า→ใหม่ เพื่อรักษาลำดับ)...');
+      const rows = docs.slice().reverse().map(d => ({
+        type:d.type, no:d.no||'', title:d.title||'', doc_date:d.date||'', from_to:d.from||'',
+        department:d.department||'', sub_department:d.subDepartment||'', file_url:d.fileUrl||'',
+        status:d.status||'ใหม่', created_by:d.createdBy||'', assignee:d.assignee||'',
+        due_date:d.dueDate||'', followup_note:d.followupNote||'',
+        user_status:d.userStatus||'', user_status_reason:d.userStatusReason||'',
+        user_status_by:d.userStatusBy||'', user_status_at:d.userStatusAt||null
+      }));
+      let done=0;
+      for(const part of chunk(rows, 200)){
+        const { error } = await sb.from('documents').insert(part);
+        if(error) throw new Error('insert documents: '+error.message);
+        done += part.length; log(`  ... ${done}/${rows.length}`);
+      }
+      log(`  ✓ ย้ายเอกสาร ${done} รายการ`, 'ok');
+    }
+
+    // ---- การตั้งค่า ----
+    if($('#doSettings').checked){
+      log('• ย้ายการตั้งค่าระบบ + ฝ่าย/งาน...');
+      const e1 = (await sb.from('settings').upsert({ id:'system', data:{
+        orgName:settings.orgName||'', theme:settings.theme||'graysunset', logoUrl:settings.logoUrl||'' }})).error;
+      const e2 = (await sb.from('settings').upsert({ id:'departments', data:{ structure: departments }})).error;
+      if(e1||e2) throw new Error('settings: '+((e1||e2).message));
+      log('  ✓ บันทึกการตั้งค่าแล้ว', 'ok');
+    }
+
+    log('\nเสร็จสิ้น ✔  เปิดหน้าเว็บหลักแล้วลองล็อกอินได้เลย', 'ok');
+  } catch (e) {
+    log('\n✖ ' + (e.message || e), 'err');
+  } finally {
+    $('#go').disabled = false;
+  }
+});
+</script>
+</body>
+</html>
