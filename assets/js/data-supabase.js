@@ -188,8 +188,9 @@
         if (docObj.id) {
           const { data: before } = await sb.from('documents').select('assignee').eq('id', docObj.id).maybeSingle();
           const prevAssignee = before ? (before.assignee || '') : '';
-          const { error } = await sb.from('documents').update(row).eq('id', docObj.id);
+          const { data: updated, error } = await sb.from('documents').update(row).eq('id', docObj.id).select('id');
           if (error) throw error;
+          if (!updated || !updated.length) return { status: 'error', message: 'ไม่มีสิทธิ์แก้ไข หรือไม่พบเอกสาร' };
           if (row.assignee && row.assignee !== prevAssignee) {
             await notify(row.assignee, docObj.id, `คุณได้รับมอบหมายเอกสาร: ${row.no} — ${row.title}`, 'assignment');
           }
@@ -213,8 +214,9 @@
     async deleteDocument(docId, username) {
       try {
         const { data } = await sb.from('documents').select('no').eq('id', docId).maybeSingle();
-        const { error } = await sb.from('documents').delete().eq('id', docId);
+        const { data: deleted, error } = await sb.from('documents').delete().eq('id', docId).select('id');
         if (error) throw error;
+        if (!deleted || !deleted.length) return { status: 'error', message: 'ไม่มีสิทธิ์ลบ หรือไม่พบเอกสาร' };
         await writeLog('DELETE', `ลบเอกสาร ${data ? (data.no || '') : ''}`);
         return { status: 'success' };
       } catch (err) {
