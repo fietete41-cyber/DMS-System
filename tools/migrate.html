@@ -81,13 +81,32 @@ $('#go').addEventListener('click', async () => {
 
     // ---- ผู้ใช้ ----
     if($('#doUsers').checked && users.length){
+      log('• เตรียมรหัสผ่าน (Supabase บังคับอย่างน้อย 6 ตัว)...');
+      const tempList = [];      // คนที่รหัสถูกเติม 0 ให้ครบ 6
+      const noPass = [];        // คนที่ไม่มีรหัสในชีต
+      const payload = users.map(u => {
+        let pw = String(u.password || '');
+        if (!pw) { noPass.push(u.username); return null; }
+        if (pw.length < 6) {
+          const padded = pw + '0'.repeat(6 - pw.length);   // เช่น 1234 -> 123400
+          tempList.push({ username: u.username, from: pw, to: padded });
+          pw = padded;
+        }
+        return { username:u.username, password:pw, name:u.name, role:u.role };
+      }).filter(Boolean);
+
       log('• ย้ายผู้ใช้ผ่าน Edge Function...');
-      const payload = users.map(u => ({ username:u.username, password:String(u.password||''), name:u.name, role:u.role }));
       const { data, error } = await sb.functions.invoke('admin', { body:{ action:'importUsers', users: payload } });
       if(error) throw new Error('importUsers: '+error.message);
       log(`  ✓ สร้างผู้ใช้ใหม่ ${data.inserted} คน (ที่มีอยู่แล้วถูกข้าม)`, 'ok');
-      const noPass = users.filter(u=>!u.password).length;
-      if(noPass) log(`  ! ${noPass} คนไม่มีรหัสผ่านในชีต จึงข้าม — ต้องเพิ่มเองใน Supabase`, 'warn');
+
+      if(tempList.length){
+        log(`  ! ${tempList.length} คนมีรหัสสั้นกว่า 6 ตัว → เติม 0 ต่อท้ายให้ครบ (รหัสชั่วคราว ควรแจ้งให้เปลี่ยน):`, 'warn');
+        tempList.forEach(t => log(`      ${t.username} : ${t.from}  →  ${t.to}`, 'warn'));
+      }
+      if(noPass.length){
+        log(`  ! ${noPass.length} คนไม่มีรหัสผ่านในชีต จึงข้าม — แอดมินต้องตั้งรหัสให้เองภายหลัง: ${noPass.join(', ')}`, 'warn');
+      }
     }
 
     // ---- เอกสาร ----

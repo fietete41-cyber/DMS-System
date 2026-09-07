@@ -12,10 +12,13 @@
 
 ## 2. ตั้งค่า Auth
 
-1. เมนู **Authentication → Sign In / Providers**
-2. เปิด **Email** ให้ Enabled
-3. **ปิด** "Confirm email" (ผู้ใช้ล็อกอินด้วย username ไม่มีอีเมลจริง)
-4. (ถ้ามี) ปิด "Secure email change" ด้วยก็ได้
+1. เมนู **Authentication → Sign In / Providers → Email**
+2. **Enable email provider** = เปิด (ปกติเปิดมาให้แล้ว)
+3. **"Confirm email"** ถ้ามี toggle ให้ปิด — ถ้าไม่มีในเวอร์ชันนี้ ก็ข้ามได้
+   (ทุกบัญชีที่เราสร้างถูก auto-confirm อยู่แล้ว)
+4. **Minimum password length** = 6 (Supabase ลดต่ำกว่านี้ไม่ได้)
+   หน้า migrate จะเติม `0` ต่อท้ายรหัสสั้นกว่า 6 ตัวให้เอง เช่น `1234` → `123400`
+   แล้วพิมพ์รายชื่อคนที่ได้รหัสชั่วคราวออกมา (ควรแจ้งให้เปลี่ยน)
 
 ## 3. สร้างตาราง+ Security Rules
 
